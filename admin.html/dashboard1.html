@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Control Center | Premium Admin</title>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root {
+            --primary-red: #e53935;
+            --dark-red: #b71c1c;
+            --apple-bg: #f5f5f7;
+            --glass: rgba(255, 255, 255, 0.75);
+            --text-dark: #1d1d1f;
+            /* Apple's specific text color */
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--apple-bg);
+            color: var(--text-dark);
+            letter-spacing: -0.02em;
+            overflow-x: hidden;
+        }
+
+        /* --- UNIFIED SIDEBAR CSS --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-right: 1px solid rgba(0, 0, 0, 0.06);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            padding: 32px 0;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+        }
+
+        .sidebar-header {
+            padding: 0 32px;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-red);
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-header .icon-box {
+            background: var(--primary-red);
+            color: white;
+            padding: 8px;
+            border-radius: 12px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 16px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #86868b;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .sidebar-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-item.active {
+            background: white;
+            color: var(--primary-red);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+        }
+
+        .sidebar-item:hover:not(.active) {
+            background: rgba(0, 0, 0, 0.03);
+            color: var(--text-dark);
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 0 16px;
+        }
+
+        .content-wrapper {
+            margin-left: 260px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            z-index: 10;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                display: none !important;
+            }
+
+            .content-wrapper {
+                margin-left: 0 !important;
+            }
+        }
+
+        /* --- APPLE THEME GLASSMORPHISM --- */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 22px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-card:hover {
+            transform: scale(1.01) translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        /* --- PREMIUM SOS BANNER --- */
+        .sos-banner {
+            background: linear-gradient(135deg, #e53935 0%, #ff5252 100%);
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(229, 57, 53, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        .pulse-icon::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 50%;
+            animation: pulse-ring 1.5s infinite;
+        }
+
+        /* --- BUTTONS --- */
+        .btn-primary {
+            background: var(--primary-red);
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 15px rgba(229, 57, 53, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: var(--dark-red);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(229, 57, 53, 0.3);
+        }
+
+        /* --- SCROLLBAR --- */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d1d1d6;
+            border-radius: 10px;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Smooth Section Fades */
+        .fade-in {
+            animation: fadeIn 1s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="flex min-h-screen relative">
+
+    <!-- 3D Canvas Background (Apple Pro Style Flow) -->
+    <div id="canvas-container"></div>
+
+    <!-- Unified Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="icon-box">
+                <i class="fa-solid fa-shield-heart"></i>
+            </div>
+            RESCUE
+        </div>
+        <nav class="sidebar-nav">
+            <!-- Active tag set to Dashboard -->
+            <a href="dashboard1.html" class="sidebar-item active">
+                <i class="fa-solid fa-chart-line"></i> Dashboard
+            </a>
+            <a href="cases1.html" class="sidebar-item">
+                <i class="fa-solid fa-kit-medical"></i> Active Cases
+            </a>
+            <a href="trace1.html" class="sidebar-item">
+                <i class="fa-solid fa-map-location-dot"></i> Live Map
+            </a>
+            <a href="responder.html" class="sidebar-item">
+                <i class="fa-solid fa-user-group"></i> Responders
+            </a>
+            <a href="notification.html" class="sidebar-item">
+                <i class="fa-solid fa-bell"></i> Notifications
+            </a>
+        </nav>
+        <div class="sidebar-bottom">
+            <a href="controlcenter.html" class="sidebar-item">
+                <i class="fa-solid fa-gear"></i> Settings
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content Area with content-wrapper offset -->
+    <main class="content-wrapper relative">
+
+        <!-- Top Navbar -->
+        <header
+            class="sticky top-0 z-40 bg-white/60 backdrop-blur-md border-b border-gray-200/50 px-10 py-5 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-[#1d1d1f]">Emergency Control Center</h2>
+            <div class="flex items-center gap-8">
+                <!-- Notification Bell -->
+                <div class="relative cursor-pointer group" onclick="toggleNotifications()">
+                    <div class="p-2 rounded-full hover:bg-gray-100 transition">
+                        <i class="fa-solid fa-bell text-gray-400 text-lg group-hover:text-red-600 transition"></i>
+                    </div>
+                    <span id="notif-count"
+                        class="absolute top-1 right-1 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">3</span>
+
+                    <!-- Apple-Style Dropdown -->
+                    <div id="notif-dropdown"
+                        class="hidden absolute right-0 mt-4 w-80 bg-white/90 backdrop-blur-2xl shadow-2xl rounded-3xl border border-gray-100 overflow-hidden z-50">
+                        <div class="p-5 border-b bg-gray-50/50 font-bold text-sm tracking-tight">Recent Alerts</div>
+                        <div class="max-h-80 overflow-y-auto">
+                            <div class="p-4 hover:bg-white/50 border-b flex items-center gap-4 transition">
+                                <div class="bg-red-100 p-3 rounded-2xl text-red-600 text-lg">🔥</div>
+                                <div>
+                                    <p class="text-xs font-bold">Fire reported - Sector 4</p>
+                                    <p class="text-[10px] text-gray-400 font-medium">2 mins ago</p>
+                                </div>
+                            </div>
+                            <div class="p-4 hover:bg-white/50 border-b flex items-center gap-4 transition">
+                                <div class="bg-blue-100 p-3 rounded-2xl text-blue-600 text-lg">🩺</div>
+                                <div>
+                                    <p class="text-xs font-bold">Medical Emergency - Mall</p>
+                                    <p class="text-[10px] text-gray-400 font-medium">15 mins ago</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 border-l border-gray-200 pl-8">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-bold leading-tight">Admin Chief</p>
+                        <p class="text-[11px] text-green-500 font-bold uppercase tracking-wider">Active</p>
+                    </div>
+                    <img src="https://ui-avatars.com/api/?name=Admin+Chief&background=e53935&color=fff"
+                        class="w-10 h-10 rounded-2xl shadow-sm border border-white" alt="Profile">
+                </div>
+            </div>
+        </header>
+
+        <div class="p-10 fade-in">
+
+            <!-- LIVE SOS ALERT BANNER -->
+            <div id="sos-banner"
+                class="hidden sos-banner p-8 mb-10 text-white flex flex-col lg:flex-row justify-between items-center transition-all duration-700 ease-in-out">
+                <div class="flex items-center gap-6 mb-6 lg:mb-0">
+                    <div class="bg-white/20 p-5 rounded-3xl relative pulse-icon flex items-center justify-center">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span
+                                class="bg-white/20 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md">Critical</span>
+                            <span class="text-xs font-medium opacity-80 italic">Real-time Alert</span>
+                        </div>
+                        <h3 class="text-2xl font-bold tracking-tight">🚨 NEW SOS REQUEST RECEIVED</h3>
+                        <p class="text-sm opacity-90 mt-1 font-medium">Location: <span class="underline">Central Park -
+                                Zone B</span> | Type: <span class="bg-white/20 px-2 py-0.5 rounded">Cardiac
+                                Arrest</span></p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="window.location.href='cases1.html'"
+                        class="bg-white text-red-600 px-8 py-3 rounded-2xl font-bold hover:scale-105 transition-all shadow-xl text-sm">VIEW
+                        DETAILS</button>
+                    <button onclick="window.location.href='cases1.html'"
+                        class="bg-black/10 border border-white/30 backdrop-blur px-8 py-3 rounded-2xl font-bold hover:bg-white/10 transition shadow-lg text-sm">ASSIGN
+                        NOW</button>
+                </div>
+            </div>
+
+            <!-- Dashboard Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+
+                <!-- Stats Cards -->
+                <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-8">
+                    <div class="glass-card p-8 cursor-pointer" onclick="window.location.href='cases1.html'">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="bg-red-50 p-4 rounded-2xl text-red-600">
+                                <i class="fa-solid fa-fire-pulse text-xl"></i>
+                            </div>
+                            <span class="text-green-500 font-bold text-xs bg-green-50 px-2 py-1 rounded-md">
+                                <i class="fa-solid fa-arrow-trend-down mr-1"></i> 25%
+                            </span>
+                        </div>
+                        <p class="text-gray-400 text-xs font-bold uppercase tracking-widest">Active Emergencies</p>
+                        <h4 class="text-5xl font-bold mt-2 tracking-tighter">12</h4>
+                        <div class="mt-6 pt-6 border-t border-gray-100 flex items-center text-xs text-gray-500">
+                            <span class="font-bold text-green-600 mr-2">2 Resolved</span> in the last hour
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-8">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="bg-blue-50 p-4 rounded-2xl text-blue-600">
+                                <i class="fa-solid fa-truck-medical text-xl"></i>
+                            </div>
+                            <span class="text-blue-500 font-bold text-xs bg-blue-50 px-2 py-1 rounded-md">
+                                Optimal
+                            </span>
+                        </div>
+                        <p class="text-gray-400 text-xs font-bold uppercase tracking-widest">Responders Deployed</p>
+                        <h4 class="text-5xl font-bold mt-2 tracking-tighter">48</h4>
+                        <div class="mt-6 pt-6 border-t border-gray-100 text-xs text-gray-500">
+                            <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                                <div class="bg-blue-500 h-full w-[85%]"></div>
+                            </div>
+                            <p class="mt-2 font-medium">85% Total Capacity Utilized</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Panel -->
+                <div class="glass-card p-8 flex flex-col h-full">
+                    <h5 class="font-bold text-lg mb-6 flex items-center gap-3">
+                        <div class="w-2 h-2 bg-yellow-500 rounded-full animate-ping"></div>
+                        Quick Response
+                    </h5>
+                    <div class="space-y-4 flex-1">
+                        <button
+                            class="w-full btn-primary text-white py-4 rounded-2xl flex items-center justify-center gap-3">
+                            <i class="fa-solid fa-robot"></i> Auto-Assign Units
+                        </button>
+                        <button
+                            class="w-full bg-[#1d1d1f] text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-3 hover:bg-black transition-all">
+                            <i class="fa-solid fa-tower-broadcast"></i> Send Broadcast
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-gray-400 text-center mt-6 uppercase font-bold tracking-widest">Protocol
+                        v4.2 Enabled</p>
+                </div>
+
+                <!-- LIVE SOS FEED -->
+                <div class="lg:col-span-2">
+                    <div class="flex justify-between items-end mb-6 px-2">
+                        <div>
+                            <h5 class="font-bold text-2xl tracking-tight">Live SOS Feed</h5>
+                            <p class="text-xs text-gray-400 font-medium">Monitoring all active distress signals</p>
+                        </div>
+                        <span
+                            class="text-[10px] bg-red-100 text-red-600 px-3 py-1 rounded-full animate-pulse font-black tracking-widest">LIVE</span>
+                    </div>
+                    <div class="space-y-6">
+                        <!-- SOS Item -->
+                        <div class="glass-card p-6 border-l-8 border-red-500">
+                            <div class="flex justify-between items-center">
+                                <div class="flex gap-6">
+                                    <div class="text-4xl filter grayscale-[0.5]">🔥</div>
+                                    <div>
+                                        <h6 class="font-bold text-lg leading-tight">Structural Fire - Industrial Estate
+                                        </h6>
+                                        <p class="text-sm text-gray-400 mt-1"><i
+                                                class="fa-solid fa-location-dot mr-1"></i> Block C, Warehouse 4</p>
+                                        <div class="flex gap-3 mt-4">
+                                            <span
+                                                class="text-[10px] bg-red-600 text-white px-3 py-1 rounded-lg font-bold">CRITICAL</span>
+                                            <span
+                                                class="text-[10px] bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-bold">RESCUE
+                                                👷 & FIRE 🔥</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onclick="window.location.href='cases1.html'"
+                                    class="bg-gray-100 text-red-600 px-6 py-2 rounded-xl font-bold text-sm hover:bg-red-600 hover:text-white transition-all">ASSIGN</button>
+                            </div>
+                        </div>
+
+                        <!-- SOS Item -->
+                        <div class="glass-card p-6 border-l-8 border-yellow-500">
+                            <div class="flex justify-between items-center">
+                                <div class="flex gap-6">
+                                    <div class="text-4xl filter grayscale-[0.5]">🩺</div>
+                                    <div>
+                                        <h6 class="font-bold text-lg leading-tight">Traffic Accident - Highway 10</h6>
+                                        <p class="text-sm text-gray-400 mt-1"><i
+                                                class="fa-solid fa-location-dot mr-1"></i> Exit 14, Southbound</p>
+                                        <div class="flex gap-3 mt-4">
+                                            <span
+                                                class="text-[10px] bg-yellow-500 text-white px-3 py-1 rounded-lg font-bold">MODERATE</span>
+                                            <span
+                                                class="text-[10px] bg-gray-100 text-gray-600 px-3 py-1 rounded-lg font-bold">AMBULANCE
+                                                🚑</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onclick="window.location.href='cases1.html'"
+                                    class="bg-gray-100 text-red-600 px-6 py-2 rounded-xl font-bold text-sm hover:bg-red-600 hover:text-white transition-all">ASSIGN</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Volunteers -->
+                <div class="glass-card p-8 mb-8" id="pending-volunteers-panel" style="display: none;">
+                    <h5 class="font-bold text-xl mb-6 tracking-tight flex justify-between items-center">
+                        Pending Approvals
+                        <span class="bg-yellow-100 text-yellow-600 text-[10px] px-2 py-1 rounded-full font-bold">NEW</span>
+                    </h5>
+                    <div id="pending-list" class="space-y-4">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Activity Stream -->
+                <div class="glass-card p-8">
+                    <h5 class="font-bold text-xl mb-8 tracking-tight">System Logs</h5>
+                    <div class="relative space-y-10">
+                        <div class="absolute left-[11px] top-2 bottom-2 w-0.5 bg-gray-100"></div>
+
+                        <div class="relative pl-10">
+                            <span
+                                class="absolute left-0 top-1 bg-green-500 w-6 h-6 rounded-full border-4 border-white shadow-sm"></span>
+                            <p class="text-sm font-bold">Case #882 Resolved</p>
+                            <p class="text-xs text-gray-400 mt-1">Ambulance reached hospital</p>
+                            <p class="text-[10px] text-gray-300 font-bold uppercase mt-1">12:04 PM</p>
+                        </div>
+
+                        <div class="relative pl-10">
+                            <span
+                                class="absolute left-0 top-1 bg-blue-500 w-6 h-6 rounded-full border-4 border-white shadow-sm"></span>
+                            <p class="text-sm font-bold">Unit Deployed</p>
+                            <p class="text-xs text-gray-400 mt-1">Rescue Team 4 dispatched to #901</p>
+                            <p class="text-[10px] text-gray-300 font-bold uppercase mt-1">11:58 AM</p>
+                        </div>
+
+                        <div class="relative pl-10">
+                            <span
+                                class="absolute left-0 top-1 bg-red-500 w-6 h-6 rounded-full border-4 border-white shadow-sm"></span>
+                            <p class="text-sm font-bold">System Alert</p>
+                            <p class="text-xs text-gray-400 mt-1">Server load peak reached 88%</p>
+                            <p class="text-[10px] text-gray-300 font-bold uppercase mt-1">11:40 AM</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notif-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        setTimeout(() => {
+            const banner = document.getElementById('sos-banner');
+            banner.classList.remove('hidden');
+            banner.classList.add('flex', 'fade-in');
+        }, 3000);
+
+        // --- VOLUNTEER APPROVAL SYSTEM ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const status = localStorage.getItem('volunteerStatus');
+            if (status === 'pending') {
+                const volDataStr = localStorage.getItem('volunteerData');
+                if (volDataStr) {
+                    const volData = JSON.parse(volDataStr);
+                    document.getElementById('pending-volunteers-panel').style.display = 'block';
+                    document.getElementById('pending-list').innerHTML = `
+                        <div class="border border-gray-100 rounded-xl p-4 bg-gray-50 relative">
+                            <h6 class="font-bold text-md">${volData.name}</h6>
+                            <p class="text-xs text-gray-500 mb-1"><i class="fa-solid fa-phone mr-1"></i> ${volData.phone}</p>
+                            <p class="text-xs text-gray-500 mb-1"><i class="fa-solid fa-car mr-1"></i> ${volData.vehicle}</p>
+                            <p class="text-xs text-gray-500 mb-3"><i class="fa-solid fa-location-dot mr-1"></i> ${volData.city}</p>
+                            <div class="flex gap-2">
+                                <button onclick="approveVolunteer()" class="bg-green-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-green-600 transition">Accept</button>
+                                <button onclick="rejectVolunteer()" class="bg-red-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-red-600 transition">Reject</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        });
+
+        function approveVolunteer() {
+            localStorage.setItem('volunteerStatus', 'approved');
+            document.getElementById('pending-volunteers-panel').style.display = 'none';
+        }
+
+        function rejectVolunteer() {
+            localStorage.removeItem('volunteerStatus');
+            localStorage.removeItem('volunteerData');
+            document.getElementById('pending-volunteers-panel').style.display = 'none';
+        }
+
+        // --- ENHANCED THREE.JS 3D FLOW BACKGROUND ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Create a Flowing Field of Particles
+        const particlesGeometry = new THREE.BufferGeometry();
+        const counts = 800;
+        const positions = new Float32Array(counts * 3);
+
+        for (let i = 0; i < counts * 3; i++) {
+            positions[i] = (Math.random() - 0.5) * 40;
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const particlesMaterial = new THREE.PointsMaterial({
+            color: 0xe53935,
+            size: 0.12,
+            transparent: true,
+            opacity: 0.15,
+            sizeAttenuation: true
+        });
+
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+
+        // Add a soft glowing orb in center
+        const orbGeo = new THREE.SphereGeometry(8, 64, 64);
+        const orbMat = new THREE.MeshBasicMaterial({
+            color: 0xe53935,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.03
+        });
+        const orb = new THREE.Mesh(orbGeo, orbMat);
+        scene.add(orb);
+
+        camera.position.z = 15;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Subtle floating movement
+            particlesMesh.rotation.y += 0.0005;
+            particlesMesh.rotation.x += 0.0002;
+
+            orb.rotation.y -= 0.001;
+
+            const time = Date.now() * 0.0002;
+            particlesMesh.position.y = Math.sin(time) * 1.5;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

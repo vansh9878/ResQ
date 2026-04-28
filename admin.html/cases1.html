@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Management | RESCUE OS</title>
+
+    <!-- Design Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #e53935;
+            --primary-hover: #b71c1c;
+            --bg: #f8f9fa;
+            --text: #333333;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* --- UNIFIED SIDEBAR CSS --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-right: 1px solid rgba(0, 0, 0, 0.06);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            padding: 32px 0;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+        }
+
+        .sidebar-header {
+            padding: 0 32px;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-header .icon-box {
+            background: var(--primary);
+            color: white;
+            padding: 8px;
+            border-radius: 12px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 16px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #86868b;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .sidebar-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-item.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+        }
+
+        .sidebar-item:hover:not(.active) {
+            background: rgba(0, 0, 0, 0.03);
+            color: var(--text);
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 0 16px;
+        }
+
+        .content-wrapper {
+            margin-left: 260px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            z-index: 10;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                display: none !important;
+            }
+
+            .content-wrapper {
+                margin-left: 0 !important;
+            }
+        }
+
+        /* --- 3D CANVAS STYLING --- */
+        #canvas-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 300px;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        /* --- CARD UI SYSTEM --- */
+        .case-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+        }
+
+        .case-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.1);
+            border-color: #eee;
+        }
+
+        /* --- FORM & INPUTS --- */
+        .search-input {
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            padding: 10px 16px;
+            transition: 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.1);
+        }
+
+        /* --- BUTTONS --- */
+        .btn-action {
+            background: var(--primary);
+            color: white;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn-action:hover {
+            background: var(--primary-hover);
+            transform: scale(1.02);
+        }
+
+        .btn-secondary {
+            background: #f1f1f1;
+            color: #666;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e5e5;
+        }
+
+        /* --- TABLE STYLING --- */
+        tr {
+            transition: background 0.2s;
+        }
+
+        tr:hover {
+            background-color: #fafafa;
+        }
+
+        .status-dot {
+            height: 8px;
+            width: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+    </style>
+</head>
+
+<body class="flex relative min-h-screen">
+
+    <!-- Unified Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="icon-box">
+                <i class="fa-solid fa-shield-heart"></i>
+            </div>
+            RESCUE
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard1.html" class="sidebar-item">
+                <i class="fa-solid fa-chart-line"></i> Dashboard
+            </a>
+            <!-- Active tag set to Active Cases -->
+            <a href="cases1.html" class="sidebar-item active">
+                <i class="fa-solid fa-kit-medical"></i> Active Cases
+            </a>
+            <a href="trace1.html" class="sidebar-item">
+                <i class="fa-solid fa-map-location-dot"></i> Live Map
+            </a>
+            <a href="responder.html" class="sidebar-item">
+                <i class="fa-solid fa-user-group"></i> Responders
+            </a>
+            <a href="notification.html" class="sidebar-item">
+                <i class="fa-solid fa-bell"></i> Notifications
+            </a>
+        </nav>
+        <div class="sidebar-bottom">
+            <a href="controlcenter.html" class="sidebar-item">
+                <i class="fa-solid fa-gear"></i> Settings
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content wrapped for layout alignment -->
+    <main class="content-wrapper relative min-h-screen">
+
+        <!-- Animated 3D Header Background -->
+        <div id="canvas-header"></div>
+
+        <!-- Top Navbar -->
+        <header class="p-8 flex justify-between items-center relative z-10">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">Case Management</h1>
+                <p class="text-sm text-gray-500">Review, assign, and resolve active emergencies</p>
+            </div>
+            <div class="flex gap-4">
+                <button class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 hover:text-red-600">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+                <button class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 hover:text-red-600">
+                    <i class="fa-solid fa-bell"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="px-8 pb-12 relative z-10">
+
+            <!-- Filter Bar Card -->
+            <div class="case-card p-5 mb-8 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-4 flex-1">
+                    <div class="relative flex-1 max-w-xs">
+                        <input type="text" placeholder="Search Case ID..." class="search-input w-full pl-10 text-sm">
+                        <i class="fa-solid fa-hashtag absolute left-4 top-3.5 text-gray-400 text-xs"></i>
+                    </div>
+                    <select class="search-input text-sm bg-white cursor-pointer">
+                        <option>All Types</option>
+                        <option>Medical 🩺</option>
+                        <option>Ambulance 🚑</option>
+                        <option>Fire 🚒</option>
+                    </select>
+                    <select class="search-input text-sm bg-white cursor-pointer">
+                        <option>All Statuses</option>
+                        <option>Urgent</option>
+                        <option>Pending</option>
+                        <option>Resolved</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button class="btn-secondary text-sm px-6">
+                        <i class="fa-solid fa-file-export mr-2"></i> Export Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Summary Analytics (Small Stats) -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="case-card p-6 border-b-4 border-red-500">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Active SOS</p>
+                    <h3 class="text-2xl font-bold mt-1">24</h3>
+                </div>
+                <div class="case-card p-6 border-b-4 border-orange-400">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Pending</p>
+                    <h3 class="text-2xl font-bold mt-1">12</h3>
+                </div>
+                <div class="case-card p-6 border-b-4 border-blue-400">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Responders</p>
+                    <h3 class="text-2xl font-bold mt-1">86</h3>
+                </div>
+                <div class="case-card p-6 border-b-4 border-green-500">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Success Rate</p>
+                    <h3 class="text-2xl font-bold mt-1">98.2%</h3>
+                </div>
+            </div>
+
+            <!-- Case Management Table Card -->
+            <div class="case-card overflow-hidden">
+                <div class="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+                    <h2 class="font-bold text-gray-700">Recent Incident Directory</h2>
+                    <span class="text-xs font-medium text-gray-400 italic">Auto-refreshing every 30s</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50/50">
+                            <tr>
+                                <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Case ID
+                                </th>
+                                <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Type</th>
+                                <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Location
+                                </th>
+                                <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Status
+                                </th>
+                                <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Required
+                                    Units</th>
+                                <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Assigned
+                                </th>
+                                <th
+                                    class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <!-- Case Row 1 -->
+                            <tr>
+                                <td class="px-6 py-5 font-mono text-xs font-bold text-gray-600">#SOS-9902</td>
+                                <td class="px-6 py-5">
+                                    <span class="flex items-center gap-2 font-semibold text-sm">
+                                        <span class="text-xl">🔥</span> Firefighter
+                                    </span>
+                                </td>
+                                <td class="px-6 py-5 text-sm">
+                                    <p class="font-medium">Industrial Zone C</p>
+                                    <p class="text-[10px] text-gray-400">Warehouse 4, Plot 12</p>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <span
+                                        class="flex items-center text-xs font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full w-fit">
+                                        <span class="status-dot bg-red-600 animate-pulse"></span> URGENT
+                                    </span>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <div class="flex gap-1">
+                                        <span title="Rescue" class="p-1.5 bg-gray-100 rounded text-xs">👷</span>
+                                        <span title="Fire" class="p-1.5 bg-gray-100 rounded text-xs">🔥</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <div class="flex -space-x-2">
+                                        <img src="https://i.pravatar.cc/150?u=1"
+                                            class="w-7 h-7 rounded-full border-2 border-white" title="Officer A">
+                                        <img src="https://i.pravatar.cc/150?u=2"
+                                            class="w-7 h-7 rounded-full border-2 border-white" title="Officer B">
+                                        <div
+                                            class="w-7 h-7 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-[8px] font-bold">
+                                            +3</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <div class="flex justify-center gap-2">
+                                        <button class="p-2 hover:text-red-600 transition" title="View"><i
+                                                class="fa-solid fa-eye text-sm"></i></button>
+                                        <button class="btn-action text-[10px] uppercase tracking-wider"
+                                            onclick="window.location.href='trace1.html'">Assign</button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Case Row 2 -->
+                            <tr>
+                                <td class="px-6 py-5 font-mono text-xs font-bold text-gray-600">#SOS-9898</td>
+                                <td class="px-6 py-5">
+                                    <span class="flex items-center gap-2 font-semibold text-sm">
+                                        <span class="text-xl">🩺</span> Medical
+                                    </span>
+                                </td>
+                                <td class="px-6 py-5 text-sm">
+                                    <p class="font-medium">City Central Mall</p>
+                                    <p class="text-[10px] text-gray-400">Level 2, Food Court</p>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <span
+                                        class="flex items-center text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded-full w-fit">
+                                        <span class="status-dot bg-orange-500"></span> PENDING
+                                    </span>
+                                </td>
+                                <td class="px-6 py-5 text-sm">
+                                    <span title="Doctor" class="p-1.5 bg-gray-100 rounded text-xs">🩺</span>
+                                    <span title="Ambulance" class="p-1.5 bg-gray-100 rounded text-xs">🚑</span>
+                                </td>
+                                <td class="px-6 py-5 text-xs text-gray-400 font-medium">Waiting for dispatch...</td>
+                                <td class="px-6 py-5 text-center">
+                                    <button class="btn-action text-[10px] uppercase tracking-wider"
+                                        onclick="window.location.href='trace1.html'">Assign Now</button>
+
+                                </td>
+                            </tr>
+
+                            <!-- Case Row 3 -->
+                            <tr>
+                                <td class="px-6 py-5 font-mono text-xs font-bold text-gray-600">#SOS-9870</td>
+                                <td class="px-6 py-5">
+                                    <span class="flex items-center gap-2 font-semibold text-sm">
+                                        <span class="text-xl">🚑</span> Accident
+                                    </span>
+                                </td>
+                                <td class="px-6 py-5 text-sm">
+                                    <p class="font-medium">Hwy 101 - Exit 14</p>
+                                    <p class="text-[10px] text-gray-400">Southbound Lane</p>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <span
+                                        class="flex items-center text-xs font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full w-fit">
+                                        <span class="status-dot bg-green-500"></span> RESOLVED
+                                    </span>
+                                </td>
+                                <td class="px-6 py-5 text-sm">
+                                    <span class="p-1.5 bg-gray-100 rounded text-xs">🚑</span>
+                                </td>
+                                <td class="px-6 py-5">
+                                    <img src="https://i.pravatar.cc/150?u=5"
+                                        class="w-7 h-7 rounded-full border-2 border-white" title="Officer E">
+                                </td>
+                                <td class="px-6 py-5 text-center">
+                                    <button class="btn-secondary text-[10px] uppercase tracking-wider">View
+                                        Report</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-4 bg-gray-50/50 text-center">
+                    <button
+                        class="text-xs font-bold text-gray-400 hover:text-red-600 transition tracking-widest uppercase">Load
+                        older cases <i class="fa-solid fa-chevron-down ml-1"></i></button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // --- THREE.JS 3D WAVE HEADER ---
+        const scene = new THREE.Scene();
+        // Updated Camera to ensure it behaves well regardless of window size changes
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 300, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, 300);
+        document.getElementById('canvas-header').appendChild(renderer.domElement);
+
+        // Create a Particles System for a "Digital Flow"
+        const particlesCount = 1500;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for (let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 10;
+        }
+
+        const particlesGeometry = new THREE.BufferGeometry();
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.015,
+            color: 0xe53935,
+            transparent: true,
+            opacity: 0.5
+        });
+
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+
+        camera.position.z = 2;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            particlesMesh.rotation.y += 0.001;
+            particlesMesh.rotation.x += 0.0005;
+
+            // Subtle wave motion
+            const positions = particlesMesh.geometry.attributes.position.array;
+            for (let i = 0; i < positions.length; i += 3) {
+                positions[i + 1] += Math.sin(Date.now() * 0.001 + positions[i]) * 0.002;
+            }
+            particlesMesh.geometry.attributes.position.needsUpdate = true;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle Window Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / 300;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, 300);
+        });
+    </script>
+</body>
+
+</html>

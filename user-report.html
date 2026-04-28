@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResQ | Report Incident</title>
+    
+    <!-- Typography & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <!-- Puter AI & Assistant -->
+    <script src="https://js.puter.com/v2/"></script>
+    <link rel="stylesheet" href="ai-assistant.css">
+
+    <style>
+        /* --- GLOBAL VARIABLES & DESIGN SYSTEM --- */
+        /* Defines the core colors, sizing, and animations for the report page */
+        :root {
+            --primary: #e53935; /* Emergency Red */
+            --bg: #f8f9fa; /* Main background color */
+            --sidebar-bg: #ffffff; /* White sidebar */
+            --text: #1d1d1f; /* Primary dark text */
+            --text-light: #6e6e73; /* Secondary lighter text */
+            --white: #ffffff;
+            --ease: cubic-bezier(0.28, 0.11, 0.32, 1); /* Smooth Apple-style animations */
+            --border: 1px solid rgba(0, 0, 0, 0.05); /* Soft borders */
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.04); /* Soft elevation shadow */
+            --radius: 24px; /* Rounded corners */
+        }
+
+        /* --- CSS RESET --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- BASE LAYOUT --- */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--white);
+            color: var(--text);
+            display: flex; /* Sidebar + Main content layout */
+            height: 100vh; /* Full screen height */
+            overflow: hidden; /* Prevent page scrolling */
+        }
+
+        /* --- SIDEBAR (Consistent) --- */
+        .sidebar {
+            width: 240px;
+            background: var(--sidebar-bg);
+            border-right: var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 40px 20px;
+            height: 100%;
+            z-index: 100;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: -1px;
+            margin-bottom: 50px;
+            padding-left: 10px;
+        }
+        .logo span { color: var(--primary); }
+
+        .menu-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 16px;
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s var(--ease);
+        }
+
+        .menu-item:hover {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .menu-item.active {
+            background: rgba(229, 57, 53, 0.06);
+            color: var(--primary);
+        }
+
+        /* --- MAIN CONTENT AREA --- */
+        .report-main {
+            flex: 1; /* Takes remaining space */
+            overflow-y: auto; /* Allow scrolling here because forms can be tall */
+            padding: 60px;
+            display: flex;
+            justify-content: center; /* Center form horizontally */
+            /* Subtle red gradient in the top right */
+            background: radial-gradient(circle at top right, rgba(229, 57, 53, 0.02), transparent 400px);
+        }
+
+        /* Constrains the width of the form content */
+        .content-container {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        header {
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        /* --- UPLOAD SECTION --- */
+        .upload-area {
+            background: var(--bg);
+            border: 2px dashed #e0e0e0;
+            border-radius: var(--radius);
+            padding: 60px 40px;
+            cursor: pointer;
+            transition: all 0.3s var(--ease);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: #ffffff;
+            box-shadow: var(--shadow);
+        }
+
+        .upload-placeholder i {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .upload-placeholder p {
+            font-weight: 500;
+            color: var(--text-light);
+        }
+
+        #imagePreview {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            border-radius: var(--radius);
+        }
+
+        /* --- AI ANALYSIS SECTION --- */
+        .ai-card {
+            background: #ffffff;
+            border-radius: var(--radius);
+            padding: 30px;
+            border: var(--border);
+            box-shadow: var(--shadow);
+            text-align: left;
+            margin-bottom: 30px;
+            display: none; /* Triggered by JS */
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .analysis-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .analysis-row:last-child { border-bottom: none; }
+
+        .analysis-label { color: var(--text-light); font-size: 0.95rem; }
+        .analysis-value { font-weight: 600; }
+
+        .severity-tag {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            background: rgba(229, 57, 53, 0.1);
+            color: var(--primary);
+        }
+
+        /* --- OPTIONAL INPUT --- */
+        .input-group {
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid #e0e0e0;
+            background: var(--bg);
+            font-family: inherit;
+            resize: none;
+            transition: all 0.3s var(--ease);
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(229, 57, 53, 0.05);
+        }
+
+        /* --- BUTTONS --- */
+        .btn-send {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            padding: 18px;
+            border-radius: 50px;
+            border: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s var(--ease);
+            box-shadow: 0 10px 20px rgba(229, 57, 53, 0.2);
+        }
+
+        .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(229, 57, 53, 0.3);
+        }
+
+        .loading-spinner {
+            display: none;
+            margin: 20px auto;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(229, 57, 53, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo"><span>●</span> ResQ</div>
+        <ul class="menu-list">
+            <li><a href="user-dashboard.html" class="menu-item"><i data-lucide="layout-grid"></i> Dashboard</a></li>
+            <li><a href="user.html" class="menu-item"><i data-lucide="alert-circle"></i> SOS</a></li>
+            <li><a href="user-report.html" class="menu-item active"><i data-lucide="file-text"></i> Report</a></li>
+            <li><a href="user-map.html" class="menu-item"><i data-lucide="map"></i> Map</a></li>
+            <li><a href="volunter.html" class="menu-item"><i data-lucide="users"></i> Volunteer</a></li>
+            <li><a href="user-profile.html" class="menu-item"><i data-lucide="user"></i> Profile</a></li>
+        </ul>
+    </aside>
+
+    <!-- 
+        =============================================
+        MAIN CONTENT: INCIDENT REPORT FORM
+        Allows users to upload photos and add descriptions.
+        =============================================
+    -->
+    <main class="report-main">
+        <div class="content-container">
+            
+            <header>
+                <h1>Report Incident</h1>
+                <p>Capture and report emergencies instantly.<br>Our AI will prioritize the situation for responders.</p>
+            </header>
+
+            <!-- UPLOAD SECTION -->
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" hidden accept="image/*" onchange="handleUpload(event)">
+                <div class="upload-placeholder" id="placeholder">
+                    <i data-lucide="camera" size="48"></i>
+                    <p>Click or drag photo of the incident</p>
+                </div>
+                <img id="imagePreview" src="#" alt="Preview">
+            </div>
+
+            <div class="loading-spinner" id="aiLoading"></div>
+
+            <!-- AI ANALYSIS CARD -->
+            <div class="ai-card" id="aiCard">
+                <div class="ai-header">
+                    <i data-lucide="cpu" size="18"></i>
+                    AI Intelligent Analysis
+                </div>
+                <div class="analysis-row">
+                    <span class="analysis-label">Detected Type</span>
+                    <span class="analysis-value">Vehicle Accident</span>
+                </div>
+                <div class="analysis-row">
+                    <span class="analysis-label">Severity</span>
+                    <span class="severity-tag">High Priority</span>
+                </div>
+                <div class="analysis-row">
+                    <span class="analysis-label">Location</span>
+                    <span class="analysis-value">Sector 4, Main Highway</span>
+                </div>
+            </div>
+
+            <!-- OPTIONAL DESCRIPTION -->
+            <div class="input-group">
+                <textarea rows="3" placeholder="Add description (optional)"></textarea>
+            </div>
+
+            <button class="btn-send" onclick="sendReport()">Send Report</button>
+
+        </div>
+    </main>
+
+    <script>
+        // Feature: Icon Initialization
+        // Renders all the Lucide UI icons on the page.
+        lucide.createIcons();
+
+        // Feature: Image Upload & AI Analysis Simulation
+        // This function runs automatically when the user selects a file from their device
+        function handleUpload(event) {
+            // Get the first file the user selected
+            const file = event.target.files[0];
+            // If they cancelled the selection, do nothing
+            if (!file) return;
+
+            // FileReader allows web applications to asynchronously read the contents of files stored on the user's computer
+            const reader = new FileReader();
+            
+            // Get our UI elements
+            const preview = document.getElementById('imagePreview'); // The <img> tag that will show the photo
+            const placeholder = document.getElementById('placeholder'); // The camera icon and text
+            const loader = document.getElementById('aiLoading'); // The spinning loading circle
+            const aiCard = document.getElementById('aiCard'); // The card showing the "results"
+
+            // What to do when the file has finished loading into memory:
+            reader.onload = function(e) {
+                // 1. Show the image preview
+                preview.src = e.target.result; // Set the image source to the file data
+                preview.style.display = 'block'; // Make the image visible
+                placeholder.style.display = 'none'; // Hide the camera icon
+
+                // 2. Simulate the AI processing the image
+                loader.style.display = 'block'; // Show the loading spinner
+                aiCard.style.display = 'none'; // Keep the results hidden for now
+
+                // Wait for 2 seconds (simulating network request/AI processing time)
+                setTimeout(() => {
+                    loader.style.display = 'none'; // Hide the spinner
+                    aiCard.style.display = 'block'; // Show the results card container
+                    // Animate the results card sliding up smoothly using GSAP
+                    gsap.to(aiCard, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" });
+                }, 2000);
+            };
+            
+            // Start reading the file as a Data URL (which can be used as an image source)
+            reader.readAsDataURL(file);
+        }
+
+        // Feature: Report Submission Simulation
+        // Triggered when the user clicks "Send Report"
+        function sendReport() {
+            const btn = document.querySelector('.btn-send');
+            
+            // Change button state to show it's working
+            btn.innerHTML = "Sending...";
+            btn.style.opacity = "0.7";
+            btn.style.pointerEvents = "none"; // Prevent double-clicking
+
+            // Simulate a network request taking 1.5 seconds
+            setTimeout(() => {
+                alert("Incident Reported Successfully. Responders are being mobilized.");
+                // Reload the page to clear the form and reset the UI
+                window.location.reload();
+            }, 1500);
+        }
+
+        // Feature: Page Entrance Animation
+        // Smoothly fade in and slide up the entire content container when the page loads
+        gsap.from(".content-container", { opacity: 0, y: 30, duration: 1, ease: "power3.out" });
+    </script>
+    <script src="ai-assistant.js"></script>
+</body>
+</html>

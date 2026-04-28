@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Settings | RESCUE OS Premium</title>
+
+    <!-- Design Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #e53935;
+            --primary-dark: #b71c1c;
+            --apple-bg: #f5f5f7;
+            --glass: rgba(255, 255, 255, 0.75);
+            --text-dark: #1d1d1f;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--apple-bg);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            letter-spacing: -0.01em;
+        }
+
+        /* --- THREE.JS BACKGROUND --- */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* --- GLASSMORPHISM SYSTEM --- */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 26px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* --- SIDEBAR (Consistent with previous codes) --- */
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border-radius: 16px;
+            color: #8e8e93;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .sidebar-link.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .sidebar-link:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.4);
+            color: var(--text-dark);
+        }
+
+        /* --- PROFILE COMPONENTS --- */
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 35px;
+            border: 4px solid white;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            object-fit: cover;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            transition: 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* --- FORM STYLING --- */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #8e8e93;
+            margin-bottom: 8px;
+            display: block;
+            letter-spacing: 0.05em;
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            background: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(229, 57, 53, 0.1);
+        }
+
+        /* --- BUTTONS --- */
+        .btn-edit {
+            background: var(--primary);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 14px;
+            font-weight: 600;
+            transition: 0.3s;
+            box-shadow: 0 10px 20px rgba(229, 57, 53, 0.2);
+        }
+
+        .btn-edit:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(229, 57, 53, 0.4);
+        }
+
+        .rating-star {
+            color: #ffcc00;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .floating {
+            animation: float 5s ease-in-out infinite;
+        }
+    </style>
+</head>
+
+<body class="flex h-screen p-5 gap-5">
+
+    <div id="canvas-container"></div>
+
+    <!-- Sidebar (Consistent: Dashboard, Active Cases, Tactical Map, Incident History, Profile Settings) -->
+    <aside class="w-[300px] h-full glass-panel flex flex-col p-7 hidden lg:flex">
+        <div class="flex items-center gap-4 mb-12 px-2">
+            <div class="bg-red-600 p-2.5 rounded-2xl">
+                <i class="fa-solid fa-satellite-dish text-white text-lg"></i>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight text-gray-800">RESCUE<span class="text-red-600">OS</span></h1>
+        </div>
+
+        <nav class="space-y-2 flex-1">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 px-3">Mission Intelligence</p>
+            <a href="dashboar.html" class="sidebar-link">
+                <i class="fa-solid fa-house-chimney w-6 text-center"></i> Dashboard
+            </a>
+            <a href="request.html" class="sidebar-link">
+                <i class="fa-solid fa-fire-extinguisher w-6 text-center"></i> Active Cases
+            </a>
+            <a href="tracking.html" class="sidebar-link">
+                <i class="fa-solid fa-map-location-dot w-6 text-center"></i> Tactical Map
+            </a>
+            <a href="credit.html" class="sidebar-link">
+                <i class="fa-solid fa-clock-rotate-left w-6 text-center"></i> Incident History
+            </a>
+            <a href="profile.html" class="sidebar-link active">
+                <i class="fa-solid fa-user-gear w-6 text-center"></i> Profile Settings
+            </a>
+        </nav>
+
+        <div class="mt-auto glass-panel p-4 bg-white/20 border-dashed border-2 text-center">
+            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Responder Identity</p>
+            <p class="text-xs font-bold text-gray-800">Verified Professional</p>
+        </div>
+    </aside>
+
+    <!-- Main Viewport -->
+    <main class="flex-1 flex flex-col overflow-y-auto">
+
+        <!-- Top Navbar -->
+        <header class="sticky top-0 z-50 mb-6">
+            <div class="glass-panel px-8 py-4 flex justify-between items-center bg-white/60">
+                <h2 class="text-2xl font-bold tracking-tight text-gray-800">Responder Profile</h2>
+
+                <div class="flex items-center gap-6">
+                    <div class="relative group cursor-pointer">
+                        <a href="notifications.html" class="relative group cursor-pointer">
+                            <i class="fa-solid fa-bell text-gray-400 text-xl group-hover:text-red-600 transition"></i>
+                            <span
+                                class="absolute -top-1 -right-1 bg-red-600 w-2 h-2 rounded-full border-2 border-white"></span>
+                        </a>
+                    </div>
+                </div>
+        </header>
+
+        <!-- Profile Content -->
+        <div class="space-y-8 pb-10">
+
+            <!-- Profile Hero Card -->
+            <section class="glass-panel p-8 flex flex-col md:flex-row items-center gap-8 floating">
+                <img src="https://ui-avatars.com/api/?name=Elena+Rodriguez&background=e53935&color=fff&size=200"
+                    class="profile-avatar" alt="Elena">
+                <div class="flex-1 text-center md:text-left">
+                    <div class="flex flex-col md:flex-row md:items-center gap-3 mb-2">
+                        <h3 class="text-3xl font-black tracking-tight text-gray-800">Elena Rodriguez</h3>
+                        <span
+                            class="bg-red-100 text-red-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest w-fit mx-auto md:mx-0">Active
+                            Doctor 🩺</span>
+                    </div>
+                    <p class="text-gray-500 font-medium mb-4">Certified Trauma Specialist • Responder ID: #9921-ER</p>
+                    <div class="flex items-center justify-center md:justify-start gap-1 mb-6">
+                        <i class="fa-solid fa-star rating-star"></i>
+                        <i class="fa-solid fa-star rating-star"></i>
+                        <i class="fa-solid fa-star rating-star"></i>
+                        <i class="fa-solid fa-star rating-star"></i>
+                        <i class="fa-solid fa-star-half-stroke rating-star"></i>
+                        <span class="text-sm font-bold ml-2">4.92 / 5.0</span>
+                    </div>
+                    <button class="btn-edit"
+                        onclick="document.getElementById('edit-section').scrollIntoView({ behavior: 'smooth' })">Edit
+                        Profile Information</button>
+                </div>
+            </section>
+
+            <!-- Stats Grid -->
+            <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-panel stat-card">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Total Cases</p>
+                    <p class="text-4xl font-black text-gray-800">1,204</p>
+                    <p class="text-[10px] text-green-500 font-bold mt-2">+12 this month</p>
+                </div>
+                <div class="glass-panel stat-card">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Mission Credits</p>
+                    <div class="flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-coins text-yellow-500"></i>
+                        <p class="text-4xl font-black text-gray-800">45,280</p>
+                    </div>
+                    <p class="text-[10px] text-gray-400 font-bold mt-2">Rank: Elite Specialist</p>
+                </div>
+                <div class="glass-panel stat-card">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Service Time</p>
+                    <p class="text-4xl font-black text-gray-800">2.4 <span
+                            class="text-lg text-gray-400 font-bold">Years</span></p>
+                    <p class="text-[10px] text-red-600 font-bold mt-2">Certified Since 2021</p>
+                </div>
+            </section>
+
+            <!-- Detailed Edit Section -->
+            <section id="edit-section" class="glass-panel p-10">
+                <h4 class="text-lg font-bold mb-8">Personal Information</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-10">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-input" value="Elena Rodriguez">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" class="form-input" value="e.rodriguez@rescue-os.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Contact Number</label>
+                        <input type="text" class="form-input" value="+1 (555) 902-8821">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Emergency Station</label>
+                        <input type="text" class="form-input" value="Central Medical Hub, Sector 7">
+                    </div>
+                    <div class="form-group md:col-span-2">
+                        <label class="form-label">Professional Bio</label>
+                        <textarea
+                            class="form-input h-32 resize-none">Trauma surgeon with 6 years of field experience in rapid-response medical intervention. Specialized in stabilization and airborne medical rescue.</textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button class="btn-edit bg-gray-800 hover:bg-black">Save Changes</button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        // --- THREE.JS BACKGROUND ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const geometry = new THREE.SphereGeometry(12, 32, 32);
+        const material = new THREE.MeshBasicMaterial({
+            color: 0xe53935,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.05
+        });
+        const sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+
+        camera.position.z = 25;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            sphere.rotation.y += 0.001;
+            sphere.rotation.x += 0.0005;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Crisis Control | Alerts & Notifications</title>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* =========================================================
+           DESIGN SYSTEM, APPLE THEME & 3D VARIABLES
+           ========================================================= */
+        :root {
+            /* Core Theme Colors */
+            --primary-red: #e53935;
+            --primary-red-hover: #b71c1c;
+            --primary-red-light: rgba(229, 57, 53, 0.08);
+
+            --update-blue: #007aff;
+            /* Apple Blue */
+            --update-blue-light: rgba(0, 122, 255, 0.08);
+
+            --system-gray: #8e8e93;
+            --system-gray-light: rgba(142, 142, 147, 0.08);
+
+            --white: #ffffff;
+            --bg-color: #f8f9fa;
+            --text-dark: #1d1d1f;
+            /* Apple Dark */
+            --text-muted: #86868b;
+            --border-light: rgba(0, 0, 0, 0.06);
+
+            /* Apple Glassmorphism Settings */
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-blur: blur(24px);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+
+            /* 3D Shadows & Elevations */
+            --shadow-soft: 0 4px 15px rgba(0, 0, 0, 0.03);
+            --shadow-lift: 0 15px 35px rgba(0, 0, 0, 0.08), 0 5px 15px rgba(0, 0, 0, 0.04);
+            --shadow-red-glow: 0 8px 25px rgba(229, 57, 53, 0.25);
+
+            /* Transitions */
+            --transition-bounce: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* =========================================================
+           AMBIENT 3D BACKGROUND
+           ========================================================= */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.5;
+            animation: floatOrb 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: rgba(229, 57, 53, 0.12);
+            top: -100px;
+            right: -50px;
+        }
+
+        .orb-2 {
+            width: 500px;
+            height: 500px;
+            background: rgba(0, 122, 255, 0.08);
+            bottom: -150px;
+            left: -100px;
+            animation-delay: -5s;
+        }
+
+        @keyframes floatOrb {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate(-30px, 40px) scale(1.1);
+            }
+
+            100% {
+                transform: translate(40px, -20px) scale(0.9);
+            }
+        }
+
+        /* =========================================================
+           SIDEBAR
+           ========================================================= */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border-right: 1px solid var(--border-light);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            padding: 32px 0;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 0 32px;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-red);
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-header .icon-box {
+            background: var(--primary-red);
+            color: var(--white);
+            padding: 8px;
+            border-radius: 12px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 16px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: var(--transition-smooth);
+        }
+
+        .sidebar-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-item.active {
+            background: var(--white);
+            color: var(--primary-red);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+        }
+
+        .sidebar-item:hover:not(.active) {
+            background: rgba(0, 0, 0, 0.03);
+            color: var(--text-dark);
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 0 16px;
+        }
+
+        /* =========================================================
+           CONTENT WRAPPER
+           ========================================================= */
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* =========================================================
+           MAIN APP CONTAINER
+           ========================================================= */
+        .app-container {
+            width: 100%;
+            max-width: 768px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: rgba(248, 249, 250, 0.6);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
+            perspective: 1500px;
+        }
+
+        /* =========================================================
+           TOP BAR
+           ========================================================= */
+        header {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border-bottom: var(--border-light);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 20;
+            transform: translateZ(20px);
+        }
+
+        .header-left,
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .icon-btn {
+            background: var(--white);
+            border: var(--border-light);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+            transition: var(--transition-bounce);
+        }
+
+        .icon-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.06);
+            color: var(--primary-red);
+        }
+
+        .screen-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: var(--text-dark);
+        }
+
+        /* =========================================================
+           FILTER TABS
+           ========================================================= */
+        .filter-container {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border-bottom: 1px solid var(--border-light);
+            z-index: 15;
+            padding-top: 12px;
+            transform: translateZ(10px);
+        }
+
+        .tabs-scroll {
+            display: flex;
+            overflow-x: auto;
+            padding: 0 24px;
+            gap: 28px;
+            scrollbar-width: none;
+        }
+
+        .tabs-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab {
+            background: transparent;
+            border: none;
+            padding: 10px 0 14px 0;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            position: relative;
+            white-space: nowrap;
+            transition: var(--transition-smooth);
+        }
+
+        .tab:hover {
+            color: var(--text-dark);
+        }
+
+        .tab.active {
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary-red);
+            border-radius: 3px 3px 0 0;
+            animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scaleX(0);
+            }
+
+            to {
+                transform: scaleX(1);
+            }
+        }
+
+        /* =========================================================
+           ACTIONS BAR
+           ========================================================= */
+        .actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .action-btn {
+            background: transparent;
+            border: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--update-blue);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .action-btn:hover {
+            color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .action-btn.danger {
+            color: var(--text-muted);
+        }
+
+        .action-btn.danger:hover {
+            color: var(--primary-red);
+        }
+
+        /* =========================================================
+           ALERTS FEED & GROUPS
+           ========================================================= */
+        .alerts-feed {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 24px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            transform-style: preserve-3d;
+        }
+
+        .alerts-feed::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .alerts-feed::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .alerts-feed::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+        }
+
+        .time-group {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .group-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 0.8px;
+            margin-top: 8px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.03);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* =========================================================
+           3D ALERT CARDS
+           ========================================================= */
+        .alert-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border-light);
+            cursor: pointer;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: var(--transition-bounce);
+            animation: slideUp3D 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+        }
+
+        @keyframes slideUp3D {
+            from {
+                opacity: 0;
+                transform: translateY(30px) rotateX(10deg);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) rotateX(0deg);
+            }
+        }
+
+        .alert-card:hover {
+            transform: translateY(-5px) scale(1.015) rotateX(2deg) rotateY(-1deg);
+            box-shadow: var(--shadow-lift);
+            border-color: rgba(0, 0, 0, 0.1);
+            z-index: 5;
+        }
+
+        .alert-card:hover .alert-icon {
+            transform: translateZ(20px) scale(1.1);
+        }
+
+        .alert-card:hover .alert-meta {
+            transform: translateZ(10px);
+        }
+
+        .alert-card.critical {
+            border-left: 5px solid var(--primary-red);
+            background: linear-gradient(90deg, rgba(229, 57, 53, 0.04) 0%, var(--white) 20%);
+        }
+
+        .alert-card.critical:hover {
+            box-shadow: var(--shadow-red-glow), var(--shadow-lift);
+        }
+
+        .alert-card.update {
+            border-left: 4px solid var(--update-blue);
+        }
+
+        .alert-card.system {
+            border-left: 4px solid var(--system-gray);
+        }
+
+        .unread-dot {
+            position: absolute;
+            top: 24px;
+            left: 12px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            opacity: 0;
+            transform: translateX(-50%);
+            transition: var(--transition-smooth);
+        }
+
+        .alert-card.unread .alert-title {
+            font-weight: 700;
+            color: #000;
+        }
+
+        .alert-card.unread .unread-dot {
+            opacity: 1;
+        }
+
+        .alert-card.critical.unread .unread-dot {
+            background: var(--primary-red);
+            box-shadow: 0 0 10px rgba(229, 57, 53, 0.8);
+        }
+
+        .alert-card.update.unread .unread-dot {
+            background: var(--update-blue);
+        }
+
+        .alert-card.system.unread .unread-dot {
+            background: var(--system-gray);
+        }
+
+        .alert-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+            transition: var(--transition-bounce);
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.04);
+        }
+
+        .critical .alert-icon {
+            background: var(--primary-red-light);
+            color: var(--primary-red);
+        }
+
+        .update .alert-icon {
+            background: var(--update-blue-light);
+            color: var(--update-blue);
+        }
+
+        .system .alert-icon {
+            background: var(--system-gray-light);
+            color: var(--system-gray);
+        }
+
+        .alert-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .alert-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color 0.3s;
+        }
+
+        .alert-subtext {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .alert-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+            flex-shrink: 0;
+            transition: var(--transition-smooth);
+        }
+
+        .alert-time {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .alert-arrow {
+            font-size: 0.9rem;
+            color: #c7c7cc;
+            transition: var(--transition-bounce);
+        }
+
+        .alert-card:hover .alert-arrow {
+            color: var(--text-dark);
+            transform: translateX(4px) scale(1.2);
+        }
+
+        /* =========================================================
+           EMPTY STATE
+           ========================================================= */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 60vh;
+            text-align: center;
+            color: var(--text-muted);
+            animation: fadeIn 0.8s ease;
+            transform-style: preserve-3d;
+        }
+
+        .empty-state i {
+            font-size: 4.5rem;
+            color: #e5e5ea;
+            margin-bottom: 24px;
+            animation: floatOrb 6s infinite alternate ease-in-out;
+        }
+
+        .empty-state h3 {
+            font-size: 1.3rem;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 0.95rem;
+            max-width: 280px;
+            line-height: 1.5;
+        }
+
+        /* =========================================================
+           3D DETAIL MODAL
+           ========================================================= */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            align-items: flex-end;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            perspective: 1000px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: var(--white);
+            width: 100%;
+            border-radius: 30px 30px 0 0;
+            padding: 32px 24px 40px;
+            transform: translateY(100%) rotateX(-10deg);
+            transform-origin: bottom center;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0) rotateX(0deg);
+        }
+
+        .drag-handle {
+            width: 48px;
+            height: 5px;
+            background: #e5e5ea;
+            border-radius: 10px;
+            margin: -16px auto 16px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            background: var(--bg-color);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: var(--transition-bounce);
+        }
+
+        .modal-close:hover {
+            background: #e5e5ea;
+            color: var(--text-dark);
+            transform: rotate(90deg);
+        }
+
+        .modal-tag {
+            align-self: flex-start;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .modal-tag.critical {
+            background: var(--primary-red-light);
+            color: var(--primary-red);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1.3;
+        }
+
+        .modal-desc {
+            font-size: 1rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-bounce);
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: var(--primary-red);
+            color: var(--white);
+            box-shadow: 0 4px 15px rgba(229, 57, 53, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-red-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(229, 57, 53, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-color);
+            color: var(--text-dark);
+        }
+
+        .btn-secondary:hover {
+            background: #e5e5ea;
+            transform: translateY(-2px);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Responsive Accommodations */
+        @media (max-width: 900px) {
+            .sidebar {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .app-container {
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .alert-card {
+                padding: 16px;
+            }
+
+            .ambient-orb {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Ambient 3D Background -->
+    <div class="ambient-bg">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+    </div>
+
+    <!-- Sidebar Integration -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="icon-box">
+                <i class="fa-solid fa-shield-heart"></i>
+            </div>
+            RESCUE
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard1.html" class="sidebar-item">
+                <i class="fa-solid fa-chart-line"></i> Dashboard
+            </a>
+            <a href="cases1.html" class="sidebar-item">
+                <i class="fa-solid fa-kit-medical"></i> Active Cases
+            </a>
+            <a href="trace1.html" class="sidebar-item">
+                <i class="fa-solid fa-map-location-dot"></i> Live Map
+            </a>
+            <a href="responder.html" class="sidebar-item">
+                <i class="fa-solid fa-user-group"></i> Responders
+            </a>
+            <!-- Active tag moved to Notifications for contextual accuracy -->
+            <a href="notification.html" class="sidebar-item active">
+                <i class="fa-solid fa-bell"></i> Notifications
+            </a>
+        </nav>
+        <div class="sidebar-bottom">
+            <a href="controlcenter.html" class="sidebar-item">
+                <i class="fa-solid fa-gear"></i> Settings
+            </a>
+        </div>
+    </aside>
+
+    <!-- Content Wrapper for Application Body -->
+    <div class="content-wrapper">
+        <!-- Main Application (Mobile-Style Feed) -->
+        <div class="app-container">
+
+            <!-- Header -->
+            <header>
+                <div class="header-left">
+                    <button class="icon-btn"><i class="fa-solid fa-chevron-left"></i></button>
+                    <h1 class="screen-title">Alerts & Notifications</h1>
+                </div>
+                <div class="header-right">
+                    <button class="icon-btn"><i class="fa-solid fa-sliders"></i></button>
+                    <button class="icon-btn"><i class="fa-solid fa-gear"></i></button>
+                </div>
+            </header>
+
+            <!-- Filters -->
+            <div class="filter-container">
+                <div class="tabs-scroll">
+                    <button class="tab active" data-filter="all">All Updates</button>
+                    <button class="tab" data-filter="critical">Critical</button>
+                    <button class="tab" data-filter="update">Operations</button>
+                    <button class="tab" data-filter="system">System</button>
+                </div>
+
+                <div class="actions-bar">
+                    <button class="action-btn" id="btn-mark-read"><i class="fa-solid fa-check-double"></i> Mark All as
+                        Read</button>
+                    <button class="action-btn danger" id="btn-clear"><i class="fa-solid fa-trash-can"></i> Clear
+                        Non-Critical</button>
+                </div>
+            </div>
+
+            <!-- Feed -->
+            <div class="alerts-feed" id="alerts-feed">
+                <!-- Rendered by JS -->
+            </div>
+
+            <!-- 3D Modal Overlay -->
+            <div class="modal-overlay" id="detail-modal">
+                <div class="modal-content" onclick="event.stopPropagation()">
+                    <div class="drag-handle"></div>
+                    <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+
+                    <div class="modal-tag critical" id="modal-tag">Critical Alert</div>
+                    <h2 class="modal-title" id="modal-title">Fire reported in Sector 4</h2>
+                    <p class="modal-desc" id="modal-desc">Severity: High. Multiple units requested. Immediate action
+                        required to deploy nearby available fire engines.</p>
+
+                    <div class="modal-actions">
+
+                        <button class="btn btn-secondary" onclick="closeModal()">Dismiss</button>
+                        <button class="btn btn-primary" onclick="window.location.href='trace1.html'">Take
+                            Action </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // MOCK DATA
+        // ==========================================
+        let alertsData = [
+            {
+                id: 1,
+                type: 'critical',
+                icon: 'fa-fire-flame-curved',
+                title: 'Major Fire in Sector 4',
+                subtext: '<i class="fa-solid fa-circle-exclamation" style="color:#e53935; font-size:0.75rem;"></i> <strong style="color:#e53935;">Severity: High</strong> • Industrial Zone 3',
+                time: '2 min ago',
+                group: 'now',
+                unread: true,
+                desc: 'Multiple calls received regarding a large structural fire in Sector 4 Industrial Zone. 2 Fire Engines dispatched. Requesting backup immediately to prevent spread to adjacent chemical facility.'
+            },
+            {
+                id: 2,
+                type: 'critical',
+                icon: 'fa-water',
+                title: 'Flood Risk: Yamuna River',
+                subtext: '<i class="fa-solid fa-triangle-exclamation" style="color:#e53935; font-size:0.75rem;"></i> <strong style="color:#e53935;">Action Required</strong> • Water levels rising',
+                time: '12 min ago',
+                group: 'now',
+                unread: true,
+                desc: 'Water levels have crossed the danger mark at the Yamuna Bank. Initiating low-lying area evacuation protocols immediately. NDRF teams alerted.'
+            },
+            {
+                id: 3,
+                type: 'update',
+                icon: 'fa-truck-medical',
+                title: 'Ambulance Unit 4 Arrived',
+                subtext: 'INC-9284 • Sector 12 Incident',
+                time: '45 min ago',
+                group: 'hour',
+                unread: true,
+                desc: 'Ambulance Unit 4 has arrived at the scene and is providing preliminary medical support. 2 casualties reported, currently stable.'
+            },
+            {
+                id: 4,
+                type: 'update',
+                icon: 'fa-hand-holding-heart',
+                title: 'NGO Support Deployed',
+                subtext: 'Food and Water supplies • Zone 3',
+                time: '52 min ago',
+                group: 'hour',
+                unread: false,
+                desc: 'Sewa Relief Foundation has dispatched 2 trucks of drinking water and dry rations to the staging area in Zone 3.'
+            },
+            {
+                id: 5,
+                type: 'system',
+                icon: 'fa-tower-broadcast',
+                title: 'Comms Network Stable',
+                subtext: 'System Diagnostics • Routine',
+                time: '3 hours ago',
+                group: 'earlier',
+                unread: false,
+                desc: 'Routine diagnostic complete. All primary and secondary communication arrays are functioning normally with 99.9% uptime.'
+            },
+            {
+                id: 6,
+                type: 'critical',
+                icon: 'fa-building-circle-exclamation',
+                title: 'Building Collapse',
+                subtext: '<i class="fa-solid fa-circle-exclamation" style="color:#e53935; font-size:0.75rem;"></i> <strong style="color:#e53935;">Severity: Critical</strong> • Downtown',
+                time: '5 hours ago',
+                group: 'earlier',
+                unread: false,
+                desc: 'Old residential structure collapsed in Downtown area. Search and Rescue (SAR) teams are actively deployed. Traffic cordoned off.'
+            }
+        ];
+
+        // ==========================================
+        // UI LOGIC
+        // ==========================================
+        const alertsFeed = document.getElementById('alerts-feed');
+        const tabs = document.querySelectorAll('.tab');
+        const modal = document.getElementById('detail-modal');
+        let currentFilter = 'all';
+
+        function renderAlerts() {
+            alertsFeed.innerHTML = '';
+            let filtered = alertsData.filter(a => currentFilter === 'all' || a.type === currentFilter);
+
+            if (filtered.length === 0) {
+                alertsFeed.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-shield-check empty-icon"></i>
+                        <h3>You're all clear</h3>
+                        <p>No alerts in this category at the moment. Keep up the good work.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const groups = {
+                'now': '<i class="fa-regular fa-clock"></i> Now',
+                'hour': '<i class="fa-solid fa-clock-rotate-left"></i> Last 1 Hour',
+                'earlier': '<i class="fa-regular fa-calendar"></i> Earlier Today'
+            };
+
+            let delayCount = 0;
+
+            Object.keys(groups).forEach(groupKey => {
+                const groupAlerts = filtered.filter(a => a.group === groupKey);
+
+                if (groupAlerts.length > 0) {
+                    const groupDiv = document.createElement('div');
+                    groupDiv.className = 'time-group';
+
+                    const groupLabel = document.createElement('div');
+                    groupLabel.className = 'group-label';
+                    groupLabel.innerHTML = groups[groupKey];
+                    groupDiv.appendChild(groupLabel);
+
+                    groupAlerts.forEach(alert => {
+                        const card = document.createElement('div');
+                        card.className = `alert-card ${alert.type} ${alert.unread ? 'unread' : ''}`;
+                        card.style.animationDelay = `${delayCount * 0.08}s`;
+                        delayCount++;
+
+                        card.onclick = () => openModal(alert.id);
+
+                        card.innerHTML = `
+                            <div class="unread-dot"></div>
+                            <div class="alert-icon"><i class="fa-solid ${alert.icon}"></i></div>
+                            <div class="alert-content">
+                                <div class="alert-title">${alert.title}</div>
+                                <div class="alert-subtext">${alert.subtext}</div>
+                            </div>
+                            <div class="alert-meta">
+                                <span class="alert-time">${alert.time}</span>
+                                <i class="fa-solid fa-chevron-right alert-arrow"></i>
+                            </div>
+                        `;
+                        groupDiv.appendChild(card);
+                    });
+                    alertsFeed.appendChild(groupDiv);
+                }
+            });
+        }
+
+        // ==========================================
+        // EVENT LISTENERS
+        // ==========================================
+        tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                tabs.forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.filter;
+                renderAlerts();
+            });
+        });
+
+        document.getElementById('btn-mark-read').addEventListener('click', () => {
+            alertsData.forEach(a => { if (currentFilter === 'all' || a.type === currentFilter) a.unread = false; });
+            renderAlerts();
+        });
+
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            alertsData = alertsData.filter(a => a.type === 'critical');
+            if (currentFilter !== 'critical') {
+                document.querySelector('[data-filter="all"]').click();
+            } else {
+                renderAlerts();
+            }
+        });
+
+        // ==========================================
+        // MODAL LOGIC
+        // ==========================================
+        function openModal(id) {
+            const alert = alertsData.find(a => a.id === id);
+            if (alert) {
+                alert.unread = false;
+                renderAlerts();
+
+                document.getElementById('modal-title').textContent = alert.title;
+                document.getElementById('modal-desc').textContent = alert.desc;
+
+                const tag = document.getElementById('modal-tag');
+                if (alert.type === 'critical') {
+                    tag.textContent = 'Critical Alert';
+                    tag.className = 'modal-tag critical';
+                    tag.style.background = 'var(--primary-red-light)';
+                    tag.style.color = 'var(--primary-red)';
+                } else if (alert.type === 'update') {
+                    tag.textContent = 'Operations Update';
+                    tag.className = 'modal-tag';
+                    tag.style.background = 'var(--update-blue-light)';
+                    tag.style.color = 'var(--update-blue)';
+                } else {
+                    tag.textContent = 'System Note';
+                    tag.className = 'modal-tag';
+                    tag.style.background = 'var(--system-gray-light)';
+                    tag.style.color = 'var(--system-gray)';
+                }
+                modal.classList.add('active');
+            }
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        modal.addEventListener('click', closeModal);
+
+        // Init
+        renderAlerts();
+
+    </script>
+</body>
+
+</html>

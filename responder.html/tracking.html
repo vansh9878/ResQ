@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Tracking | RESCUE OS Premium</title>
+
+    <!-- Design Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+    <style>
+        :root {
+            --primary: #e53935;
+            --primary-dark: #b71c1c;
+            --apple-bg: #f5f5f7;
+            --glass: rgba(255, 255, 255, 0.75);
+            --text-dark: #1d1d1f;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--apple-bg);
+            color: var(--text-dark);
+            overflow: hidden;
+            /* Navigation pages are usually fixed-height */
+            letter-spacing: -0.01em;
+        }
+
+        /* --- THREE.JS BACKGROUND --- */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* --- GLASSMORPHISM SYSTEM --- */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 22px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* --- SIDEBAR (Consistent with last code) --- */
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 18px;
+            border-radius: 14px;
+            color: #8e8e93;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .sidebar-link.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- MAP INTERFACE --- */
+        #map-container {
+            background: #e5e5e1;
+            /* Map placeholder color */
+            position: relative;
+            overflow: hidden;
+            border-radius: 24px;
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.1);
+        }
+
+        .navigation-line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            transition: stroke-dashoffset 5s linear;
+        }
+
+        .pulse-marker {
+            width: 16px;
+            height: 16px;
+            background: var(--primary);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 20px var(--primary);
+            animation: map-pulse 2s infinite;
+        }
+
+        @keyframes map-pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.7);
+            }
+
+            70% {
+                transform: scale(1.2);
+                box-shadow: 0 0 0 15px rgba(229, 57, 53, 0);
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(229, 57, 53, 0);
+            }
+        }
+
+        /* --- MISSION STEPS --- */
+        .progress-bar {
+            height: 6px;
+            background: #e5e5e7;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            width: 15%;
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.8s ease;
+        }
+
+        /* --- BUTTONS --- */
+        .btn-mission {
+            width: 100%;
+            padding: 14px;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 14px;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .btn-start {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 8px 20px rgba(229, 57, 53, 0.3);
+        }
+
+        .btn-reached {
+            background: #1d1d1f;
+            color: white;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-complete {
+            background: #4caf50;
+            color: white;
+            display: none;
+        }
+
+        .btn-mission:not(:disabled):hover {
+            transform: translateY(-3px) scale(1.02);
+        }
+    </style>
+</head>
+
+<body class="flex h-screen p-4 gap-4">
+
+    <div id="canvas-container"></div>
+
+    <!-- Sidebar (Strictly Consistent with last code) -->
+    <aside class="w-[280px] h-full glass-panel flex flex-col p-6 hidden lg:flex">
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <div class="bg-red-600 p-2 rounded-xl">
+                <i class="fa-solid fa-satellite-dish text-white text-lg"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-gray-800">RESCUE<span class="text-red-600">OS</span></h1>
+        </div>
+
+        <nav class="space-y-2 flex-1">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 px-2">Mission Control</p>
+            <a href="dashboard.html" class="sidebar-link">
+                <i class="fa-solid fa-house-chimney w-5"></i> Dashboard
+            </a>
+            <a href="request.html" class="sidebar-link">
+                <i class="fa-solid fa-fire-extinguisher w-5"></i> Active Cases
+            </a>
+            <a href="tracking.html" class="sidebar-link active">
+                <i class="fa-solid fa-map-location-dot w-5"></i> Tactical Map
+            </a>
+            <a href="credit.html" class="sidebar-link">
+                <i class="fa-solid fa-clock-rotate-left w-5"></i> Incident History
+            </a>
+            <a href="profile.html" class="sidebar-link">
+                <i class="fa-solid fa-user-gear w-5"></i> Profile Settings
+            </a>
+        </nav>
+
+        <div class="mt-auto p-4 glass-panel bg-white/20 border-dashed border-2">
+            <p class="text-[9px] font-bold text-red-600 uppercase mb-1">Signal Strength</p>
+            <div class="flex gap-1 mb-2">
+                <div class="w-1 h-3 bg-red-600 rounded-full"></div>
+                <div class="w-1 h-3 bg-red-600 rounded-full"></div>
+                <div class="w-1 h-3 bg-red-600 rounded-full"></div>
+                <div class="w-1 h-3 bg-gray-300 rounded-full"></div>
+            </div>
+            <p class="text-[10px] text-gray-500 font-medium">Navigating to Sector 7...</p>
+        </div>
+    </aside>
+
+    <!-- Main Content Area (Split Layout) -->
+    <main class="flex-1 flex flex-col md:flex-row gap-4">
+
+        <!-- Left: Map View -->
+        <div id="map-container" class="flex-[1.8] glass-panel relative overflow-hidden">
+            <!-- Real Leaflet Map Container -->
+            <div id="real-map" class="absolute inset-0 w-full h-full" style="z-index: 1;"></div>
+
+            <!-- Current Location HUD -->
+            <div class="absolute bottom-8 left-8 glass-panel p-4 flex items-center gap-4 bg-white/90" style="z-index: 1000;">
+                <div class="bg-blue-500 w-10 h-10 rounded-full flex items-center justify-center text-white shadow-lg">
+                    <i class="fa-solid fa-location-arrow"></i>
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-gray-400 uppercase">Current Speed</p>
+                    <p class="text-lg font-bold" id="speed-text">0 <span class="text-xs">km/h</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Case Details + Actions -->
+        <div class="flex-1 glass-panel p-6 flex flex-col">
+            <!-- Mission Header -->
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <p class="text-[10px] font-bold text-red-600 uppercase tracking-widest mb-1">Live Mission</p>
+                    <h2 class="text-xl font-bold">#SOS-9921</h2>
+                </div>
+                <div class="bg-red-50 p-3 rounded-2xl text-2xl animate-pulse">🩺</div>
+            </div>
+
+            <!-- Progress HUD -->
+            <div class="mb-8">
+                <div class="flex justify-between text-[10px] font-bold mb-2 text-gray-400 uppercase">
+                    <span>Dispatch</span>
+                    <span id="status-text">Ready to start</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Case Summary -->
+            <div class="space-y-4 mb-8 overflow-y-auto pr-2">
+                <div class="bg-white/40 p-4 rounded-2xl border border-white">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Emergency Type</p>
+                    <p class="text-sm font-semibold">Cardiac Arrest Incident</p>
+                </div>
+                <div class="bg-white/40 p-4 rounded-2xl border border-white">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Location Details</p>
+                    <p class="text-sm font-semibold italic text-gray-600">"Sector 7, Central Mall, near the Level 2 Food
+                        Court elevators."</p>
+                </div>
+                <div class="bg-white/40 p-4 rounded-2xl border border-white">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Victim Profile</p>
+                    <p class="text-sm font-semibold">Male, Approx 55yrs, Unconscious</p>
+                </div>
+            </div>
+
+            <!-- Action Area -->
+            <div class="mt-auto">
+                <button id="btn-start" onclick="startJourney()" class="btn-mission btn-start">
+                    <i class="fa-solid fa-play"></i> Start Journey
+                </button>
+                <button id="btn-reached" onclick="reachedLocation()" class="btn-mission btn-reached" disabled>
+                    <i class="fa-solid fa-location-crosshairs"></i> Reached Location
+                </button>
+                <a href="dashboar.html">
+                    <button id="btn-complete" onclick="completeCase()" class="btn-mission btn-complete">
+                        <i class="fa-solid fa-circle-check"></i> Complete & File Case
+                    </button>
+                </a>
+
+                <div class="flex gap-2">
+                    <button
+                        class="flex-1 bg-gray-200 text-gray-600 p-3 rounded-xl text-xs font-bold hover:bg-gray-300 transition">
+                        <i class="fa-solid fa-phone mr-1"></i> Dispatch
+                    </button>
+                    <button
+                        class="flex-1 bg-gray-200 text-gray-600 p-3 rounded-xl text-xs font-bold hover:bg-gray-300 transition">
+                        <i class="fa-solid fa-shield mr-1"></i> SOS
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- THREE.JS BACKGROUND ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const geometry = new THREE.PlaneGeometry(100, 100, 30, 30);
+        const material = new THREE.MeshBasicMaterial({ color: 0xe53935, wireframe: true, transparent: true, opacity: 0.05 });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.rotation.x = -Math.PI / 2.5;
+        scene.add(mesh);
+        camera.position.z = 25;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            mesh.rotation.y += 0.0005;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <script src="../shared-map.js"></script>
+
+    <script>
+        // --- THREE.JS BACKGROUND ---
+            missionState = 0; // En route to incident
+            document.getElementById('progress-fill').style.width = "50%";
+            document.getElementById('status-text').innerText = "En Route";
+            document.getElementById('status-text').style.color = "#e53935";
+
+            if (!isAnimating) {
+                isAnimating = true;
+                requestAnimationFrame(animateVehicle);
+            }
+
+            document.getElementById('btn-start').style.display = "none";
+            const reachedBtn = document.getElementById('btn-reached');
+            reachedBtn.disabled = false;
+            reachedBtn.style.opacity = "1";
+            reachedBtn.style.cursor = "pointer";
+            reachedBtn.classList.add('btn-start'); // Style it like the active button
+        }
+
+        function reachedLocation() {
+            missionState = 1; // At incident, ready for hospital
+            document.getElementById('progress-fill').style.width = "85%";
+            document.getElementById('status-text').innerText = "On Scene";
+            document.getElementById('status-text').style.color = "#1d1d1f";
+
+            document.getElementById('btn-reached').style.display = "none";
+            document.getElementById('btn-complete').style.display = "flex";
+            
+            // Resume animation to hospital
+            isAnimating = true;
+            animatedLine.setStyle({ color: '#4caf50' }); // Change route color to green for hospital
+            requestAnimationFrame(animateVehicle);
+        }
+
+        function completeCase() {
+            document.getElementById('progress-fill').style.width = "100%";
+            // Final redirection animation
+            document.body.style.opacity = "0";
+            document.body.style.transition = "opacity 0.8s ease";
+            setTimeout(() => {
+                window.location.href = 'credits.html';
+            }, 800);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

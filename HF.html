@@ -1,0 +1,54 @@
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive Text Demo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<style>body {
+  font-family: 'Inter', sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.container {
+  width: 600px;
+}
+
+#interactiveText {
+  line-height: 1.8;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.word {
+  transition: all 0.2s ease;
+}
+
+.highlight {
+  color: #38bdf8;
+  transform: scale(1.05);
+}</style>
+<body>
+
+  <div class="container">
+    <h1>Interactive Reading Experience</h1>
+
+    <p id="interactiveText">
+      When every second matters, systems must respond instantly. 
+      Traditional emergency response often suffers from delays, 
+      lack of coordination, and inefficient communication. 
+      Imagine a system that intelligently connects nearby responders, 
+      predicts the fastest routes, and ensures help arrives exactly 
+      when needed — transforming chaos into control.
+    </p>
+  </div>
+
+  <script src="server.js"></script>
+</body>
+</html>

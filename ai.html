@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RESQ AI Assistant</title>
+
+  <!-- Puter AI -->
+  <script src="https://js.puter.com/v2/"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f8f9fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      width: 400px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      margin-top: 10px;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 10px;
+      width: 100%;
+      background: #e53935;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #b71c1c;
+    }
+
+    pre {
+      margin-top: 15px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="box">
+    <h2>🚨 Emergency Assistant</h2>
+
+    <input id="userInput" placeholder="Describe emergency..." />
+
+    <button onclick="handleAI()">Get Help</button>
+
+    <pre id="responseBox"></pre>
+  </div>
+
+ <script>
+async function handleAI() {
+  const input = document.getElementById("userInput").value;
+  const output = document.getElementById("responseBox");
+
+  if (!input.trim()) return;
+
+  output.innerText = "Analyzing...";
+
+  const SYSTEM_PROMPT = `
+You are an emergency assistant.
+
+Rules:
+- Give short answers only
+- Maximum 5 bullet points
+- No explanation
+- No extra text
+- No greetings
+
+Only give immediate action steps.
+`;
+
+  try {
+    const response = await puter.ai.chat(
+      SYSTEM_PROMPT + "\nSituation: " + input
+    );
+
+    let aiText = "";
+
+    // ✅ SAFE RESPONSE HANDLING
+    if (typeof response === "string") {
+      aiText = response;
+    } else if (response?.message) {
+      aiText = response.message;
+    } else if (response?.text) {
+      aiText = response.text;
+    } else if (Array.isArray(response) && response[0]?.generated_text) {
+      aiText = response[0].generated_text;
+    } else {
+      aiText = JSON.stringify(response); // fallback
+    }
+
+    // ✅ FORCE STRING + CLEAN FORMAT
+    const cleanText = String(aiText).replace(/\n/g, "\n");
+
+    output.innerText = cleanText;
+
+  } catch (err) {
+    output.innerText = "Error: " + err.message;
+    console.error(err);
+  }
+}
+</script>
+
+</body>
+</html>

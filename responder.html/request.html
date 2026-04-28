@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Requests | RESCUE OS Premium</title>
+
+    <!-- Design Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #e53935;
+            --primary-dark: #b71c1c;
+            --apple-bg: #f5f5f7;
+            --glass: rgba(255, 255, 255, 0.75);
+            --text-dark: #1d1d1f;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--apple-bg);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            letter-spacing: -0.01em;
+        }
+
+        /* --- THREE.JS BACKGROUND --- */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* --- GLASSMORPHISM SYSTEM --- */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 22px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-panel:hover {
+            transform: translateY(-6px) perspective(1000px) rotateX(1deg);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.08);
+            border-color: rgba(229, 57, 53, 0.2);
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 18px;
+            border-radius: 14px;
+            color: #8e8e93;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .sidebar-link.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar-link:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.4);
+            color: var(--text-dark);
+        }
+
+        /* --- FILTER BAR DROPDOWNS --- */
+        .filter-select {
+            appearance: none;
+            background-color: white;
+            border: 1px solid #e5e5e7;
+            padding: 8px 36px 8px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .filter-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(229, 57, 53, 0.1);
+        }
+
+        /* --- BUTTONS --- */
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: 0.3s;
+            box-shadow: 0 4px 12px rgba(229, 57, 53, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(229, 57, 53, 0.4);
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes pulse-red {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .alert-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse-red 1.5s infinite;
+        }
+
+        .severity-badge {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 2px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+
+<body class="flex min-h-screen">
+
+    <div id="canvas-container"></div>
+
+    <!-- Sidebar Navigation (Updated with Requested Icons) -->
+    <aside class="w-[300px] h-[calc(100vh-32px)] glass-panel m-4 flex flex-col p-6 hidden lg:flex sticky top-4">
+        <div class="flex items-center gap-3 mb-12 px-2">
+            <div class="bg-red-600 p-2 rounded-xl">
+                <i class="fa-solid fa-satellite-dish text-white text-lg"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-gray-800">RESCUE<span class="text-red-600">OS</span></h1>
+        </div>
+
+        <nav class="space-y-2 flex-1">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 px-2">Mission Control</p>
+
+            <a href="dashboar.html" class="sidebar-link">
+                <i class="fa-solid fa-house-chimney w-5"></i> Dashboard
+            </a>
+
+            <!-- Updated Option -->
+            <a href="request.html" class="sidebar-link active">
+                <i class="fa-solid fa-fire-extinguisher w-5"></i> Active Cases
+            </a>
+
+            <a href="tracking.html" class="sidebar-link">
+                <i class="fa-solid fa-map-location-dot w-5"></i> Tactical Map
+            </a>
+
+            <!-- Added Options -->
+            <a href="credit.html" class="sidebar-link">
+                <i class="fa-solid fa-clock-rotate-left w-5"></i> Incident History
+            </a>
+
+            <a href="profile.html" class="sidebar-link">
+                <i class="fa-solid fa-user-gear w-5"></i> Profile Settings
+            </a>
+        </nav>
+
+        <div class="mt-auto p-4 glass-panel bg-white/20 border-dashed border-2">
+            <p class="text-[9px] font-bold text-red-600 uppercase mb-2">Network Status</p>
+            <p class="text-[11px] font-medium leading-relaxed text-gray-600">
+                <span class="alert-dot mr-1"></span> Securely connected to Command. 8 missions nearby.
+            </p>
+        </div>
+    </aside>
+
+    <!-- Main Viewport -->
+    <main class="flex-1 p-6 lg:pt-8 overflow-y-auto">
+
+        <!-- Top Navbar -->
+        <header class="flex justify-between items-center mb-8 px-2">
+            <div>
+                <h2 class="text-2xl font-bold tracking-tight">Emergency Requests</h2>
+                <p class="text-xs text-gray-400 font-medium">Browse incoming distress signals and claim assignments.</p>
+            </div>
+
+            <a href="profile.html">
+                <div class="flex items-center gap-6">
+                    <div class="glass-panel px-4 py-2 flex items-center gap-3">
+                        <img src="https://ui-avatars.com/api/?name=Elena+Rodriguez&background=e53935&color=fff"
+                            class="w-8 h-8 rounded-xl shadow-sm" alt="Profile">
+                        <div class="text-right">
+                            <p class="text-[10px] font-bold">Elena Rodriguez</p>
+                            <p class="text-[9px] text-green-500 font-black uppercase">Responder 🩺</p>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </header>
+
+        <!-- Filter Bar -->
+        <section class="glass-panel p-4 mb-10 flex flex-wrap gap-4 items-center justify-between">
+            <div class="flex gap-4">
+                <select class="filter-select">
+                    <option>All Emergencies</option>
+                    <option>Medical 🩺</option>
+                    <option>Fire 🔥</option>
+                    <option>Accident 🚑</option>
+                </select>
+                <select class="filter-select">
+                    <option>Radius: 5km</option>
+                    <option>Radius: 10km</option>
+                </select>
+                <select class="filter-select">
+                    <option>Severity: All</option>
+                    <option>Critical</option>
+                </select>
+            </div>
+            <p class="text-[10px] font-bold text-gray-400 uppercase">Filtered by your role</p>
+        </section>
+
+        <!-- Requests Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+
+            <!-- Card 1 -->
+            <div class="glass-panel p-6 flex flex-col">
+                <div class="flex justify-between items-start mb-6">
+                    <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">
+                        🩺</div>
+                    <span class="severity-badge bg-red-100 text-red-600">Critical</span>
+                </div>
+                <h3 class="text-lg font-bold mb-1">Cardiac Arrest Incident</h3>
+                <p class="text-xs text-gray-400 font-medium mb-4"><i class="fa-solid fa-location-dot mr-1"></i> Sector
+                    7, Central Mall (L2)</p>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-white/40 p-3 rounded-xl border border-white/50">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Distance</p>
+                        <p class="text-xs font-bold text-gray-800">1.2 km</p>
+                    </div>
+                    <div class="bg-white/40 p-3 rounded-xl border border-white/50">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Posted</p>
+                        <p class="text-xs font-bold text-gray-800">2 min ago</p>
+                    </div>
+                </div>
+
+                <div class="mt-auto flex gap-3">
+                    <button
+                        class="flex-1 bg-gray-100 text-gray-500 py-3 rounded-xl text-xs font-bold hover:bg-gray-200 transition">View
+                        Details</button>
+                    <button onclick="acceptCase('SOS-8821')" class="flex-1 btn-primary text-xs">Accept Case</button>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="glass-panel p-6 flex flex-col">
+                <div class="flex justify-between items-start mb-6">
+                    <div
+                        class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">
+                        🚑</div>
+                    <span class="severity-badge bg-blue-100 text-blue-600">Moderate</span>
+                </div>
+                <h3 class="text-lg font-bold mb-1">Road Traffic Accident</h3>
+                <p class="text-xs text-gray-400 font-medium mb-4"><i class="fa-solid fa-location-dot mr-1"></i> Hwy 101,
+                    Exit 4B</p>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-white/40 p-3 rounded-xl border border-white/50">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Distance</p>
+                        <p class="text-xs font-bold text-gray-800">4.8 km</p>
+                    </div>
+                    <div class="bg-white/40 p-3 rounded-xl border border-white/50">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Posted</p>
+                        <p class="text-xs font-bold text-gray-800">12 min ago</p>
+                    </div>
+                </div>
+
+                <div class="mt-auto flex gap-3">
+                    <button
+                        class="flex-1 bg-gray-100 text-gray-500 py-3 rounded-xl text-xs font-bold hover:bg-gray-200 transition">View
+                        Details</button>
+                    <button onclick="acceptCase('SOS-8830')" class="flex-1 btn-primary text-xs">Accept Case</button>
+                </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="glass-panel p-6 flex flex-col">
+                <div class="flex justify-between items-start mb-6">
+                    <div
+                        class="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner">
+                        🔥</div>
+                    <span class="severity-badge bg-orange-100 text-orange-600">High</span>
+                </div>
+                <h3 class="text-lg font-bold mb-1">Kitchen Fire - Residential</h3>
+                <p class="text-xs text-gray-400 font-medium mb-4"><i class="fa-solid fa-location-dot mr-1"></i> 442
+                    Sky-High Apartments</p>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-white/40 p-3 rounded-xl border border-white/50">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Distance</p>
+                        <p class="text-xs font-bold text-gray-800">2.1 km</p>
+                    </div>
+                    <div class="bg-white/40 p-3 rounded-xl border border-white/50">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase mb-1">Posted</p>
+                        <p class="text-xs font-bold text-gray-800">5 min ago</p>
+                    </div>
+                </div>
+
+                <div class="mt-auto flex gap-3">
+                    <button
+                        class="flex-1 bg-gray-100 text-gray-500 py-3 rounded-xl text-xs font-bold hover:bg-gray-200 transition">View
+                        Details</button>
+                    <button onclick="acceptCase('SOS-8845')" class="flex-1 btn-primary text-xs">Accept Case</button>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        // --- THREE.JS 3D TACTICAL GRID ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const geometry = new THREE.PlaneGeometry(100, 100, 20, 20);
+        const material = new THREE.MeshBasicMaterial({ color: 0xe53935, wireframe: true, transparent: true, opacity: 0.05 });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.rotation.x = -Math.PI / 2.5;
+        scene.add(mesh);
+
+        camera.position.y = 10;
+        camera.position.z = 30;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = Date.now() * 0.001;
+            mesh.geometry.attributes.position.array.forEach((val, i) => {
+                if (i % 3 === 2) {
+                    mesh.geometry.attributes.position.array[i] = Math.sin(time + i) * 0.5;
+                }
+            });
+            mesh.geometry.attributes.position.needsUpdate = true;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        function acceptCase(id) {
+            const btn = event.target;
+            btn.innerHTML = '<i class="fa-solid fa-circle-check mr-2"></i> Accepted';
+            btn.style.backgroundColor = '#4caf50';
+            btn.style.borderColor = '#4caf50';
+            setTimeout(() => { window.location.href = 'tracking.html'; }, 800);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

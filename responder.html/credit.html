@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rewards & Credits | RESCUE OS Premium</title>
+
+    <!-- Design Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #e53935;
+            --primary-dark: #b71c1c;
+            --apple-bg: #f5f5f7;
+            --glass: rgba(255, 255, 255, 0.75);
+            --text-dark: #1d1d1f;
+            --gold: #ffc107;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--apple-bg);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            letter-spacing: -0.01em;
+        }
+
+        /* --- THREE.JS BACKGROUND --- */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* --- GLASSMORPHISM SYSTEM --- */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 22px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* --- SIDEBAR (Consistent with last code) --- */
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 18px;
+            border-radius: 14px;
+            color: #8e8e93;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .sidebar-link.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- GAMIFIED COMPONENTS --- */
+        .hero-gradient {
+            background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-gradient::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .badge-card {
+            text-align: center;
+            perspective: 1000px;
+        }
+
+        .badge-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.1));
+        }
+
+        .glass-panel:hover .badge-icon {
+            transform: rotateY(180deg) scale(1.1);
+        }
+
+        .stats-number {
+            background: linear-gradient(180deg, var(--text-dark) 0%, #666 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        /* --- FLOATING ANIMATION --- */
+        .floating {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+
+<body class="flex h-screen p-4 gap-4">
+
+    <div id="canvas-container"></div>
+
+    <!-- Sidebar (Consistent with Tactical Map Code) -->
+    <aside class="w-[280px] h-full glass-panel flex flex-col p-6 hidden lg:flex">
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <div class="bg-red-600 p-2 rounded-xl">
+                <i class="fa-solid fa-satellite-dish text-white text-lg"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-gray-800">RESCUE<span class="text-red-600">OS</span></h1>
+        </div>
+
+        <nav class="space-y-2 flex-1">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 px-2">Mission Control</p>
+            <a href="dashboar.html" class="sidebar-link">
+                <i class="fa-solid fa-house-chimney w-5"></i> Dashboard
+            </a>
+            <a href="request.html" class="sidebar-link">
+                <i class="fa-solid fa-fire-extinguisher w-5"></i> Active Cases
+            </a>
+            <a href="tracking.html" class="sidebar-link">
+                <i class="fa-solid fa-map-location-dot w-5"></i> Tactical Map
+            </a>
+            <a href="credit.html" class="sidebar-link active">
+                <i class="fa-solid fa-clock-rotate-left w-5"></i> Incident History
+            </a>
+            <a href="profile.html" class="sidebar-link">
+                <i class="fa-solid fa-user-gear w-5"></i> Profile Settings
+            </a>
+        </nav>
+
+        <div class="mt-auto p-4 glass-panel bg-white/20 border-dashed border-2">
+            <p class="text-[9px] font-bold text-red-600 uppercase mb-1">Rank Status</p>
+            <p class="text-[11px] font-bold text-gray-800">Elite Responder</p>
+            <div class="w-full bg-gray-200 h-1 mt-2 rounded-full overflow-hidden">
+                <div class="bg-red-600 h-full w-[85%]"></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Viewport -->
+    <main class="flex-1 overflow-y-auto space-y-6">
+
+        <!-- Total Credits Hero Section -->
+        <section class="hero-gradient glass-panel p-10 flex flex-col items-center justify-center text-center">
+            <p class="text-xs font-bold uppercase tracking-[0.3em] opacity-80 mb-2">Available Balance</p>
+            <div class="flex items-center gap-4">
+                <i class="fa-solid fa-coins text-4xl text-yellow-400"></i>
+                <h2 class="text-7xl font-black tracking-tighter" id="credit-counter">0</h2>
+            </div>
+            <p class="mt-4 text-sm font-medium opacity-70">You've earned 450 credits this week. Keep up the life-saving
+                work!</p>
+            <a href="rewards.html"
+                class="relative z-50 inline-block mt-8 bg-white text-red-600 px-8 py-3 rounded-full font-bold shadow-2xl hover:scale-105 transition-all text-center">
+                Redeem Rewards
+            </a>
+        </section>
+
+        <!-- Stats Row -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass-panel p-6 text-center">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Cases Completed</p>
+                <p class="text-4xl stats-number">142</p>
+                <div class="text-[10px] text-green-500 font-bold mt-2"><i class="fa-solid fa-caret-up"></i> 12% vs last
+                    month</div>
+            </div>
+            <div class="glass-panel p-6 text-center">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Avg Response Time</p>
+                <p class="text-4xl stats-number">4.2m</p>
+                <div class="text-[10px] text-green-500 font-bold mt-2">Top 5% in Region</div>
+            </div>
+            <div class="glass-panel p-6 text-center">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Success Rate</p>
+                <p class="text-4xl stats-number">99.1%</p>
+                <div class="text-[10px] text-gray-400 font-bold mt-2">Elite Status Confirmed</div>
+            </div>
+        </section>
+
+        <!-- Achievements Section -->
+        <section>
+            <h3 class="text-xl font-bold mb-6 px-2">Achievements & Badges</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Badge 1 -->
+                <div class="glass-panel p-8 badge-card floating">
+                    <span class="badge-icon">🥇</span>
+                    <h4 class="font-bold text-lg mb-2">First Rescue</h4>
+                    <p class="text-xs text-gray-400">Awarded for successfully completing your first emergency dispatch.
+                    </p>
+                    <div class="mt-4 text-[10px] font-black text-red-600 uppercase">Unlocked: Jan 2024</div>
+                </div>
+                <!-- Badge 2 -->
+                <div class="glass-panel p-8 badge-card" style="animation-delay: 0.5s;">
+                    <span class="badge-icon">⚡</span>
+                    <h4 class="font-bold text-lg mb-2">Fast Responder</h4>
+                    <p class="text-xs text-gray-400">Awarded for reaching 10 consecutive locations under 5 minutes.</p>
+                    <div class="mt-4 text-[10px] font-black text-red-600 uppercase">Unlocked: Feb 2024</div>
+                </div>
+                <!-- Badge 3 -->
+                <div class="glass-panel p-8 badge-card floating" style="animation-delay: 1s;">
+                    <span class="badge-icon">🏢</span>
+                    <h4 class="font-bold text-lg mb-2">10 Cases Completed</h4>
+                    <p class="text-xs text-gray-400">A milestone for consistent service across urban sectors.</p>
+                    <div class="mt-4 text-[10px] font-black text-red-600 uppercase">Unlocked: Mar 2024</div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- THREE.JS BACKGROUND ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Particle Reward Halo
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 2000;
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for (let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 60;
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const material = new THREE.PointsMaterial({
+            size: 0.05,
+            color: 0xe53935,
+            transparent: true,
+            opacity: 0.4
+        });
+
+        const particlesMesh = new THREE.Points(particlesGeometry, material);
+        scene.add(particlesMesh);
+        camera.position.z = 20;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            particlesMesh.rotation.y += 0.001;
+            particlesMesh.rotation.x += 0.0005;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // --- CREDIT COUNTER ANIMATION ---
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        const obj = document.getElementById("credit-counter");
+        setTimeout(() => {
+            animateValue(obj, 0, 12450, 2000);
+        }, 500);
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

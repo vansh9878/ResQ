@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responder Dashboard | RESCUE OS Premium</title>
+
+    <!-- Design Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #e53935;
+            --primary-dark: #b71c1c;
+            --apple-bg: #f5f5f7;
+            --glass: rgba(255, 255, 255, 0.7);
+            --text-dark: #1d1d1f;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--apple-bg);
+            color: var(--text-dark);
+            overflow: hidden;
+            /* Prevent body scroll, use container scroll */
+            letter-spacing: -0.01em;
+        }
+
+        /* --- THREE.JS CANVAS --- */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* --- GLASSMORPHISM SYSTEM --- */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 22px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+            border-color: rgba(229, 57, 53, 0.2);
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 280px;
+            height: calc(100vh - 40px);
+            margin: 20px;
+            display: flex;
+            flex-col: column;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border-radius: 14px;
+            color: #8e8e93;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .sidebar-link.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar-link:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.4);
+            color: var(--text-dark);
+        }
+
+        /* --- BUTTONS --- */
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-weight: 600;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(229, 57, 53, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(229, 57, 53, 0.5);
+        }
+
+        /* --- STATUS STEPPER --- */
+        .step-container {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .step-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #d2d2d7;
+            position: relative;
+            z-index: 10;
+            transition: 0.5s;
+        }
+
+        .step-dot.active {
+            background: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        .step-line {
+            position: absolute;
+            height: 3px;
+            background: #e5e5e7;
+            width: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 5;
+        }
+
+        .step-line-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 25%;
+            transition: 1s ease;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 15px rgba(229, 57, 53, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(229, 57, 53, 0);
+            }
+        }
+
+        .urgent-glow {
+            animation: pulse-glow 2s infinite;
+        }
+
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        /* --- SCROLLABLE CONTENT --- */
+        .main-viewport {
+            height: 100vh;
+            overflow-y: auto;
+            flex: 1;
+        }
+    </style>
+</head>
+
+<body class="flex">
+
+    <div id="canvas-container"></div>
+
+    <!-- Sidebar Navigation (Apple Pro Style) -->
+    <aside class="sidebar glass-panel p-6 hidden lg:flex flex-col">
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <div class="bg-red-600 p-2 rounded-xl">
+                <i class="fa-solid fa-satellite-dish text-white text-lg"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-gray-800">RESCUE<span class="text-red-600">OS</span></h1>
+        </div>
+
+        <nav class="space-y-2 flex-1">
+            <a href="dashboar.html" class="sidebar-link active">
+                <i class="fa-solid fa-house-chimney w-5"></i> Dashboard
+            </a>
+            <a href="request.html" class="sidebar-link">
+                <i class="fa-solid fa-fire-extinguisher w-5"></i> Active Cases
+            </a>
+            <a href="tracking.html" class="sidebar-link">
+                <i class="fa-solid fa-map-location-dot w-5"></i> Tactical Map
+            </a>
+            <a href="credit.html" class="sidebar-link">
+                <i class="fa-solid fa-clock-rotate-left w-5"></i> Incident History
+            </a>
+            <a href="profile.html" class="sidebar-link">
+                <i class="fa-solid fa-user-gear w-5"></i> Profile Settings
+            </a>
+        </nav>
+
+        <div class="mt-auto glass-panel p-4 bg-white/30">
+            <p class="text-[10px] font-black uppercase text-gray-400 mb-2">Duty Briefing</p>
+            <p class="text-xs text-gray-600 leading-relaxed">
+                Currently <strong>Level 2 Alert</strong> in Sector B. High traffic density reported on Hwy 101. Weather:
+                Clear.
+            </p>
+        </div>
+    </aside>
+
+    <!-- Main Viewport -->
+    <div class="main-viewport pt-24 pb-12">
+
+        <!-- Top Navbar -->
+        <nav class="fixed top-0 right-0 left-0 lg:left-[320px] z-50 px-6 py-4">
+            <div class="glass-panel px-8 py-3 flex justify-between items-center">
+                <div class="flex flex-col">
+                    <h1 class="text-xl font-bold tracking-tight text-gray-800">My Emergency Tasks</h1>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase -mt-1">Command & Control Interface</p>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <div class="relative group cursor-pointer">
+                        <a href="notifications.html" class="relative group cursor-pointer">
+                            <i class="fa-solid fa-bell text-gray-400 text-xl group-hover:text-red-600 transition"></i>
+                            <span
+                                class="absolute -top-1 -right-1 bg-red-600 w-2 h-2 rounded-full border-2 border-white"></span>
+                        </a>
+                    </div>
+                    <div class="flex items-center gap-3 border-l pl-6 border-gray-200">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-xs font-bold" id="profile-name">Elena Rodriguez</p>
+                            <p class="text-[10px] text-green-500 font-black uppercase">On Duty</p>
+                        </div>
+                        <img id="profile-avatar" src="https://ui-avatars.com/api/?name=Elena+Rodriguez&background=e53935&color=fff"
+                            class="w-10 h-10 rounded-2xl shadow-sm border border-white" alt="Profile">
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Content Content -->
+        <div class="max-w-6xl mx-auto px-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+                <!-- LEFT COLUMN: ACTIVE CASES -->
+                <div class="lg:col-span-8 space-y-8">
+                    <div class="flex justify-between items-center px-2">
+                        <h2 class="text-2xl font-bold tracking-tight">Priority Assignments</h2>
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Live Updates Every
+                            10s</span>
+                    </div>
+
+                    <!-- Case Card 1 (Urgent) -->
+                    <div id="case-1" class="glass-panel p-8 border-l-4 border-red-600 urgent-glow">
+                        <div class="flex flex-col md:flex-row justify-between gap-6">
+                            <div class="flex gap-6">
+                                <div class="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-3xl">
+                                    🩺</div>
+                                <div>
+                                    <div class="flex gap-2 mb-2">
+                                        <span
+                                            class="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Critical</span>
+                                        <span class="text-xs text-gray-400 font-medium">Assigned 3m ago</span>
+                                    </div>
+                                    <h3 class="text-xl font-bold">Cardiac Arrest - Zone B</h3>
+                                    <p class="text-sm text-gray-500 mt-1"><i class="fa-solid fa-location-dot mr-1"></i>
+                                        Grand Central Terminal, Gate 4</p>
+                                    <div class="flex gap-6 mt-4">
+                                        <span class="text-xs font-bold"><i
+                                                class="fa-solid fa-road mr-1 text-red-600"></i> 1.2 km</span>
+                                        <span class="text-xs font-bold"><i
+                                                class="fa-solid fa-clock mr-1 text-red-600"></i> 4 min est.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-row md:flex-col justify-end gap-3">
+                                <button onclick="acceptCase('SOS-9921')" class="btn-primary whitespace-nowrap">Accept
+                                    Case</button>
+                                <button onclick="updateStatus('On the way')"
+                                    class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl font-bold hover:bg-gray-200 transition text-sm">Start
+                                    Mission</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case Card 2 -->
+                    <div class="glass-panel p-8">
+                        <div class="flex flex-col md:flex-row justify-between gap-6 opacity-60">
+                            <div class="flex gap-6">
+                                <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl">
+                                    🚑</div>
+                                <div>
+                                    <div class="flex gap-2 mb-2">
+                                        <span
+                                            class="bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Moderate</span>
+                                        <span class="text-xs text-gray-400 font-medium">Assigned 15m ago</span>
+                                    </div>
+                                    <h3 class="text-xl font-bold">Traffic Collision</h3>
+                                    <p class="text-sm text-gray-500 mt-1"><i class="fa-solid fa-location-dot mr-1"></i>
+                                        Broadway & 42nd St</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <p class="text-xs font-bold text-gray-400 italic">Standby Mode</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description/Status Guide Section -->
+                    <div class="glass-panel p-6 bg-white/20 border-dashed border-2">
+                        <h4 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">Mission Protocol
+                            Guide</h4>
+                        <p class="text-xs text-gray-400 leading-relaxed">
+                            Responders must accept priority assignments within 30 seconds of receipt. Upon reaching the
+                            "On the Way" status, real-time GPS sharing is enabled for Command Center monitoring. Ensure
+                            all personnel safety gear is engaged before arrival at Zone B.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN -->
+                <div class="lg:col-span-4 space-y-8">
+
+                    <!-- Status Panel -->
+                    <div class="glass-panel p-6">
+                        <h4 class="font-bold text-sm mb-6 text-gray-400 uppercase tracking-widest">My Operational Status
+                        </h4>
+                        <div class="step-container mb-4">
+                            <div class="step-line">
+                                <div id="progress-fill" class="step-line-fill"></div>
+                            </div>
+                            <div class="step-dot active"></div>
+                            <div id="dot-2" class="step-dot"></div>
+                            <div id="dot-3" class="step-dot"></div>
+                            <div id="dot-4" class="step-dot"></div>
+                            <div id="dot-5" class="step-dot"></div>
+                        </div>
+                        <div class="flex justify-between text-[8px] font-black text-gray-400 px-1">
+                            <span>AVAIL</span>
+                            <span>ASGN</span>
+                            <span>ROUTE</span>
+                            <span>ARRV</span>
+                            <span>DONE</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="glass-panel p-6">
+                        <h4 class="font-bold text-sm mb-4 text-gray-400 uppercase tracking-widest">Tactical Actions</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button onclick="location.href='request.html'"
+                                class="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/50 border border-white hover:bg-white transition group">
+                                <i
+                                    class="fa-solid fa-list-check text-red-600 text-xl group-hover:scale-110 transition"></i>
+                                <span class="text-[10px] font-bold">View Tasks</span>
+                            </button>
+                            <button onclick="location.href='tracking.html'"
+                                class="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/50 border border-white hover:bg-white transition group">
+                                <i
+                                    class="fa-solid fa-map-location-dot text-red-600 text-xl group-hover:scale-110 transition"></i>
+                                <span class="text-[10px] font-bold">Open Map</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Credits Snapshot -->
+                    <div class="glass-panel p-6 floating">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-400 uppercase tracking-widest">Performance
+                                    Metrics</h4>
+                                <p class="text-3xl font-bold mt-1 tracking-tighter">4.92 / 5.0</p>
+                            </div>
+                            <div class="bg-yellow-100 p-2 rounded-xl text-yellow-600">
+                                <i class="fa-solid fa-star"></i>
+                            </div>
+                        </div>
+                        <div class="space-y-4 border-t border-gray-100 pt-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-medium text-gray-500">Mission Credits</span>
+                                <span class="text-sm font-bold">12,450</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-medium text-gray-500">Response Consistency</span>
+                                <span class="text-sm font-bold text-green-600">98%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Uploaded Documents -->
+                    <div class="glass-panel p-6" id="uploaded-documents" style="display: none;">
+                        <h4 class="font-bold text-sm mb-4 text-gray-400 uppercase tracking-widest">Uploaded Documents</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                <i class="fa-solid fa-id-card text-blue-500"></i>
+                                <span class="text-xs font-bold" id="doc-dl">Driving License</span>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                <i class="fa-solid fa-file-contract text-red-500"></i>
+                                <span class="text-xs font-bold" id="doc-cert">Training Certificate</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- THREE.JS 3D BACKGROUND ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // More detailed Mesh for "Real-time Connectivity" feel
+        const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+        const material = new THREE.MeshBasicMaterial({ color: 0xe53935, wireframe: true, transparent: true, opacity: 0.04 });
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+
+        camera.position.z = 30;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            mesh.rotation.y += 0.001;
+            mesh.rotation.x += 0.0005;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // --- FETCH PROFILE DATA ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const volDataStr = localStorage.getItem('volunteerData');
+            const status = localStorage.getItem('volunteerStatus');
+            
+            if (volDataStr && status === 'approved') {
+                const volData = JSON.parse(volDataStr);
+                
+                // Update Name and Avatar
+                document.getElementById('profile-name').innerText = volData.name;
+                document.getElementById('profile-avatar').src = `https://ui-avatars.com/api/?name=\${encodeURIComponent(volData.name)}&background=e53935&color=fff`;
+                
+                // Update Documents
+                document.getElementById('doc-dl').innerText = volData.dl || 'Driving License';
+                document.getElementById('doc-cert').innerText = volData.certificate || 'Training Certificate';
+                
+                // Show Documents Section
+                document.getElementById('uploaded-documents').style.display = 'block';
+            }
+        });
+
+        // --- DASHBOARD LOGIC (Same as previous) ---
+        function acceptCase(id) {
+            localStorage.setItem('activeCase', id);
+            document.getElementById('dot-2').classList.add('active');
+            document.getElementById('progress-fill').style.width = '25%';
+            const btn = event.target;
+            btn.innerHTML = '<i class="fa-solid fa-circle-check mr-2"></i> Accepted';
+            btn.classList.replace('btn-primary', 'bg-green-100');
+            btn.classList.add('text-green-600');
+            setTimeout(() => { window.location.href = 'tracking.html'; }, 1000);
+        }
+
+        function updateStatus(status) {
+            const progress = document.getElementById('progress-fill');
+            document.getElementById('dot-2').classList.add('active');
+            document.getElementById('dot-3').classList.add('active');
+            progress.style.width = '50%';
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

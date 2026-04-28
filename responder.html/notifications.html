@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications Hub | RESCUE OS Premium</title>
+
+    <!-- Design Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #e53935;
+            --primary-dark: #b71c1c;
+            --apple-bg: #f5f5f7;
+            --glass: rgba(255, 255, 255, 0.75);
+            --text-dark: #1d1d1f;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--apple-bg);
+            color: var(--text-dark);
+            overflow: hidden;
+            letter-spacing: -0.01em;
+        }
+
+        /* --- THREE.JS BACKGROUND --- */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* --- GLASSMORPHISM SYSTEM --- */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(28px) saturate(190%);
+            -webkit-backdrop-filter: blur(28px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* --- SIDEBAR (Consistent with Tactical Map & Settings) --- */
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border-radius: 16px;
+            color: #8e8e93;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .sidebar-link.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .sidebar-link:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.4);
+            color: var(--text-dark);
+        }
+
+        /* --- TOP NAVIGATION & BELL --- */
+        .top-nav {
+            position: sticky;
+            top: 1.5rem;
+            z-index: 100;
+            margin-bottom: 2rem;
+        }
+
+        .notif-bell-btn {
+            position: relative;
+            cursor: pointer;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .notif-bell-btn:hover {
+            transform: scale(1.1) translateY(-2px);
+            box-shadow: 0 8px 20px rgba(229, 57, 53, 0.2);
+            color: var(--primary);
+        }
+
+        .notif-bell-btn:active {
+            transform: scale(0.95);
+        }
+
+        .notif-bell-btn .unread-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--primary);
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 10px;
+            border: 2.5px solid #f5f5f7;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-3px);
+            }
+
+            60% {
+                transform: translateY(-2px);
+            }
+        }
+
+        /* --- NOTIFICATION FEED --- */
+        .notif-card {
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .notif-card:hover {
+            transform: scale(1.008) translateY(-3px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .unread-glow {
+            border-left: 6px solid var(--primary);
+            background: rgba(229, 57, 53, 0.02);
+        }
+
+        .category-orb {
+            width: 50px;
+            height: 50px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .pulse-indicator {
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(229, 57, 53, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(229, 57, 53, 0);
+            }
+        }
+    </style>
+</head>
+
+<body class="flex h-screen p-5 gap-5">
+
+    <div id="canvas-container"></div>
+
+    <!-- Sidebar (Strictly: Dashboard, Active Cases, Tactical Map, Incident History, Profile Settings) -->
+    <aside class="w-[300px] h-full glass-panel flex flex-col p-7 hidden lg:flex">
+        <div class="flex items-center gap-4 mb-12 px-2">
+            <div class="bg-red-600 p-2.5 rounded-2xl">
+                <i class="fa-solid fa-satellite-dish text-white text-lg"></i>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight text-gray-800">RESCUE<span class="text-red-600">OS</span></h1>
+        </div>
+
+        <nav class="space-y-2 flex-1">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 px-3">Mission Intelligence</p>
+            <a href="dashboar.html" class="sidebar-link">
+                <i class="fa-solid fa-house-chimney w-6 text-center"></i> Dashboard
+            </a>
+            <a href="request.html" class="sidebar-link">
+                <i class="fa-solid fa-fire-extinguisher w-6 text-center"></i> Active Cases
+            </a>
+            <a href="tracking.html" class="sidebar-link">
+                <i class="fa-solid fa-map-location-dot w-6 text-center"></i> Tactical Map
+            </a>
+            <a href="credit.html" class="sidebar-link">
+                <i class="fa-solid fa-clock-rotate-left w-6 text-center"></i> Incident History
+            </a>
+            <a href="profile.html" class="sidebar-link">
+                <i class="fa-solid fa-user-gear w-6 text-center"></i> Profile Settings
+            </a>
+        </nav>
+
+        <div class="mt-auto glass-panel p-4 bg-white/20 border-dashed border-2 text-center">
+            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Encrypted Link</p>
+            <p class="text-xs font-bold text-green-600">Secure • Active</p>
+        </div>
+    </aside>
+
+    <!-- Main Viewport -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+
+        <!-- Top Navbar -->
+        <header class="top-nav px-4">
+            <div class="glass-panel px-7 py-4 flex justify-between items-center bg-white/60">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight text-gray-800">Alert Center</h2>
+                    <p class="text-[11px] text-gray-400 font-bold uppercase tracking-widest">Real-time Command Feed</p>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <!-- Clickable Notification Bell (Top Right) -->
+                    <div class="notif-bell-btn" onclick="highlightUnread()">
+                        <i class="fa-solid fa-bell text-xl"></i>
+                        <span class="unread-count" id="badge">3</span>
+                    </div>
+
+                    <div class="flex items-center gap-4 border-l pl-6 border-gray-100">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-sm font-bold leading-none">Elena Rodriguez</p>
+                            <span class="text-[9px] text-green-500 font-black uppercase tracking-tighter">Status:
+                                Ready</span>
+                        </div>
+                        <img src="https://ui-avatars.com/api/?name=Elena+Rodriguez&background=e53935&color=fff"
+                            class="w-11 h-11 rounded-2xl border-2 border-white shadow-md" alt="Profile">
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Notification Feed -->
+        <div class="flex-1 overflow-y-auto px-4 space-y-4 pb-10" id="feed">
+
+            <!-- Notification 1 -->
+            <div class="glass-panel p-6 notif-card unread-glow flex items-center gap-6"
+                onclick="window.location.href='tracking.html'">
+                <div class="category-orb bg-red-100 text-red-600">
+                    <i class="fa-solid fa-truck-medical"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-start">
+                        <h4 class="text-base font-bold text-gray-800">New Emergency Dispatch: #SOS-9921</h4>
+                        <div class="pulse-indicator"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 font-medium leading-relaxed">Medical responder requested at
+                        Sector 7 Mall. ETA for primary backup is 8 minutes. Tap to navigate.</p>
+                    <span class="text-[10px] font-bold text-gray-300 uppercase mt-3 inline-block">Seconds ago</span>
+                </div>
+            </div>
+
+            <!-- Notification 2 -->
+            <div class="glass-panel p-6 notif-card unread-glow flex items-center gap-6">
+                <div class="category-orb bg-amber-100 text-amber-600">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-start">
+                        <h4 class="text-base font-bold text-gray-800">Achievement Unlocked</h4>
+                        <div class="pulse-indicator"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 font-medium leading-relaxed">Congratulations! You've reached
+                        "Elite Status" for completing 10 assignments this week.</p>
+                    <span class="text-[10px] font-bold text-gray-300 uppercase mt-3 inline-block">18m ago</span>
+                </div>
+            </div>
+
+            <!-- Notification 3 -->
+            <div class="glass-panel p-6 notif-card flex items-center gap-6">
+                <div class="category-orb bg-gray-100 text-gray-600">
+                    <i class="fa-solid fa-message"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-base font-bold text-gray-800">Message from HQ</h4>
+                    <p class="text-xs text-gray-500 mt-1 font-medium leading-relaxed">System-wide update: New mapping
+                        features are now active in the Tactical Map view.</p>
+                    <span class="text-[10px] font-bold text-gray-300 uppercase mt-3 inline-block">2h ago</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // --- THREE.JS BACKGROUND ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const geometry = new THREE.BufferGeometry();
+        const counts = 1200;
+        const positions = new Float32Array(counts * 3);
+
+        for (let i = 0; i < counts * 3; i++) {
+            positions[i] = (Math.random() - 0.5) * 60;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const material = new THREE.PointsMaterial({
+            size: 0.12,
+            color: 0xe53935,
+            transparent: true,
+            opacity: 0.25
+        });
+
+        const points = new THREE.Points(geometry, material);
+        scene.add(points);
+        camera.position.z = 25;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            points.rotation.y += 0.0007;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // --- INTERACTION: CLICK BELL ---
+        function highlightUnread() {
+            const unreadItems = document.querySelectorAll('.unread-glow');
+            unreadItems.forEach(item => {
+                item.style.transform = "scale(1.03)";
+                item.style.boxShadow = "0 20px 40px rgba(229, 57, 53, 0.15)";
+                setTimeout(() => {
+                    item.style.transform = "";
+                    item.style.boxShadow = "";
+                }, 500);
+            });
+            // Haptic-style feedback on badge
+            const badge = document.getElementById('badge');
+            badge.style.transform = "scale(1.5)";
+            setTimeout(() => badge.style.transform = "", 200);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

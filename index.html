@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RESQ | Every Second Matters</title>
+    
+    <!-- Typography & GSAP -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+        /* --- GLOBAL VARIABLES & DESIGN SYSTEM --- */
+        /* Defines the core colors, sizing, and animations for the landing page */
+        :root {
+            --primary: #e53935; /* Brand Red */
+            --bg: #000000; /* Main background color */
+            --secondary: #ffffff;
+            --text: #333333; /* Primary dark text */
+            --text-light: #666666; /* Secondary lighter text */
+            --container-w: 1100px; /* Maximum width for main content sections */
+            --ease-apple: cubic-bezier(0.28, 0.11, 0.32, 1); /* Apple-style elastic easing curve */
+        }
+
+        /* --- CSS RESET --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased; /* Crisp text rendering on high-DPI screens */
+        }
+
+        /* --- BASE STYLES --- */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: transparent; /* Allows animated background to show through */
+            color: var(--text);
+            overflow-x: hidden; /* Prevent horizontal scrolling caused by animations */
+            line-height: 1.5; /* Better text readability */
+        }
+
+        /* --- Navigation --- */
+        /* --- NAVIGATION HEADER --- */
+        /* The sticky logo at the top left of the page */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 40px 60px;
+            z-index: 1000; /* Keep navigation always on top */
+            display: flex;
+            justify-content: flex-start;
+            pointer-events: none; /* Allows clicking through empty space in the nav bar */
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: -1px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: auto; /* Re-enable clicking specifically on the logo */
+        }
+
+        .logo span { color: var(--primary); } /* The red dot next to the logo text */
+
+        /* --- Global Background Depth --- */
+        /* --- GLOBAL BACKGROUND DEPTH --- */
+        /* Creates the large, blurred floating colorful orbs behind all content */
+        .page-bg {
+            position: fixed; /* Fix to viewport so it stays during scrolling */
+            inset: 0;
+            z-index: -1;
+            background: var(--bg);
+            overflow: hidden;
+            pointer-events: none; /* Ensure it never blocks interactions */
+        }
+
+        /* The actual glowing orbs */
+        .page-bg::before, .page-bg::after {
+            content: '';
+            position: absolute;
+            width: 50vw;
+            height: 50vw;
+            border-radius: 50%;
+            filter: blur(80px); /* Heavy blur creates the soft glow effect */
+            opacity: 0.6;
+            animation: float 10s ease-in-out infinite alternate; /* Floating animation */
+        }
+
+        /* Top-Left Red Orb */
+        .page-bg::before {
+            background: rgba(229, 57, 53, 0.12);
+            top: -10%;
+            left: -10%;
+        }
+
+        /* Bottom-Right Blue Orb */
+        .page-bg::after {
+            background: rgba(0, 122, 255, 0.08);
+            bottom: -10%;
+            right: -10%;
+            animation-delay: -5s; /* Offset animation timing */
+        }
+
+        /* Animation keyframes for the floating effect */
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, 30px) scale(1.05); }
+        }
+
+        /* --- Hero Section --- */
+        .custom-hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            padding: 0 20px;
+            background: transparent;
+            overflow: hidden;
+        }
+
+        .custom-hero-content {
+            max-width: 900px;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            margin-top: -40px; /* Slight adjustment to center properly */
+        }
+
+        .custom-hero-title {
+            font-size: clamp(2.5rem, 5.5vw, 4.2rem);
+            font-weight: 700;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            color: #1d1d1f;
+        }
+
+        .custom-hero-title span.gradient-text {
+            background: linear-gradient(135deg, var(--primary), #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .custom-hero-sub {
+            font-size: 1.25rem;
+            font-weight: 400;
+            color: var(--text-light);
+            line-height: 1.5;
+            max-width: 650px;
+            margin-bottom: 50px;
+        }
+
+        .sos-container {
+            position: relative;
+            width: 450px;
+            height: 450px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sos-button {
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff4b4b, #cc0000);
+            color: white;
+            font-size: 3.5rem;
+            font-weight: 800;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 0 40px rgba(229, 57, 53, 0.6), inset 0 0 30px rgba(255, 255, 255, 0.3);
+            z-index: 10;
+            animation: pulse-glow 2s infinite alternate;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.3s var(--ease-apple);
+        }
+
+        .sos-button:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 40px rgba(229, 57, 53, 0.5), inset 0 0 30px rgba(255, 255, 255, 0.3);
+            }
+            100% {
+                box-shadow: 0 0 100px rgba(229, 57, 53, 0.9), inset 0 0 30px rgba(255, 255, 255, 0.5);
+            }
+        }
+
+        .ripple {
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background: rgba(229, 57, 53, 0.3);
+            animation: ripple-effect 3s linear infinite;
+            z-index: 1;
+        }
+
+        .ripple-2 { animation-delay: 1s; }
+        .ripple-3 { animation-delay: 2s; }
+
+        @keyframes ripple-effect {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        .circular-text {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            animation: spin 20s linear infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .circular-text span {
+            position: absolute;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 2px;
+            transform-origin: center center;
+            text-transform: uppercase;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .ambulance-section {
+            position: relative;
+            width: 100%;
+            height: 240px;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+            /* YOU CAN ADJUST THESE MARGINS TO MOVE THE AMBULANCE UP OR DOWN */
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+
+        .road-line {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(0,0,0,0.15) 20%, rgba(0,0,0,0.15) 80%, transparent);
+            border-radius: 2px;
+            border-top: #1d1d1f;
+        }
+
+        .ambulance-mover {
+            display: inline-block;
+            animation: move-across 12s linear infinite;
+            will-change: transform;
+            position: absolute;
+            bottom: 23px; /* Rests right on top of the road line */
+        }
+
+        .ambulance-img {
+            height: 180px; /* 1.5x larger */
+            width: auto;
+            filter: drop-shadow(0 15px 20px rgba(0,0,0,0.15));
+            will-change: transform;
+        }
+
+        @keyframes move-across {
+            0% { transform: translateX(-20vw); }
+            100% { transform: translateX(120vw); }
+        }
+
+
+
+        /* --- Story Layout --- */
+        .container {
+            max-width: var(--container-w);
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        .story-section {
+            padding: 140px 0;
+            display: flex;
+            align-items: center;
+            min-height: 90vh;
+        }
+
+        .story-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr; /* Better visual weight balance */
+            align-items: center;
+            gap: 100px;
+            width: 100%;
+        }
+
+        .reverse .story-grid {
+            grid-template-columns: 0.9fr 1.1fr;
+        }
+
+        .text-box h2 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            letter-spacing: -1.5px;
+            margin-bottom: 24px;
+            line-height: 1.1;
+            color: #1d1d1f;
+        }
+
+        .text-box p {
+            font-size: 1.25rem;
+            color: var(--text-light);
+            line-height: 1.5;
+            max-width: 500px;
+        }
+
+        .img-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .img-box img {
+            
+            height: auto;
+            max-width: 700px;
+            display: block;
+            /* Seamless blending */
+            mix-blend-mode: multiply;
+            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.02));
+        }
+
+        /* --- Feature Cards (3D Tilt) --- */
+        .features-wrapper {
+            padding: 160px 0 40px;
+            background: transparent;
+            text-align: center;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 80px;
+        }
+
+        .card-perspective {
+            perspective: 3000px; /* High perspective for 3D depth */
+        }
+
+        .feature-card {
+            background: var(--bg);
+            padding: 60px 40px;
+            border-radius: 32px;
+            text-align: left;
+            transition: transform 0.1s ease-out, box-shadow 0.4s var(--ease-apple), background 0.4s var(--ease-apple);
+            transform-style: preserve-3d;
+            height: 400px;
+            cursor: default;
+        }
+
+        .feature-card:hover {
+            background: #ffffff;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.08);
+        }
+
+        .card-content {
+            transform: translateZ(50px); /* Lifts content off card base */
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 30px;
+            display: block;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1d1d1f;
+        }
+
+        .feature-card p {
+            color: var(--text-light);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        /* --- Final CTA --- */
+        .final-cta {
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: transparent;
+            padding: 40px 20px;
+        }
+
+        .final-cta h2 {
+            font-size: 3.5rem;
+            letter-spacing: -2px;
+            margin-bottom: 48px;
+            font-weight: 700;
+        }
+
+        .btn-red {
+            background: var(--primary);
+            color: white;
+            padding: 22px 52px;
+            border-radius: 100px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.15rem;
+            display: inline-block;
+            transition: all 0.4s var(--ease-apple);
+        }
+
+        .btn-red:hover {
+            transform: scale(1.05) translateY(-4px);
+            box-shadow: 0 20px 40px rgba(229, 57, 53, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #1d1d1f;
+            padding: 22px 52px;
+            border-radius: 100px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.15rem;
+            border: 2px solid #e0e0e0;
+            display: inline-block;
+            transition: all 0.4s var(--ease-apple);
+        }
+
+        .btn-outline:hover {
+            border-color: #1d1d1f;
+            transform: scale(1.05) translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+        }
+
+        /* --- Reveal Helpers --- */
+        .reveal { opacity: 0; transform: translateY(40px); }
+
+        @media (max-width: 900px) {
+            .story-grid, .reverse .story-grid {
+                grid-template-columns: 1fr;
+                gap: 60px;
+                text-align: center;
+            }
+            .text-box p { margin: 0 auto; }
+            .img-box { order: -1; }
+            nav { padding: 30px; }
+            .custom-hero-title { font-size: 2.8rem; }
+            .custom-hero-sub { font-size: 1.1rem; margin-bottom: 40px; }
+            .sos-container { transform: scale(0.6); }
+        }
+    </style>
+</head>
+<body>
+<body>
+    <!-- The glowing ambient background elements -->
+    <div class="page-bg"></div>
+
+    <!-- 
+        =============================================
+        NAVIGATION BAR
+        Contains the brand logo (fixed to the top left)
+        =============================================
+    -->
+    <nav>
+        <div class="logo"><span>●</span> RESQ</div>
+    </nav>
+
+    <!-- 
+        =============================================
+        HERO SECTION
+        The first section the user sees when loading the page.
+        Features a massive, impactful headline and interactive SOS system.
+        =============================================
+    -->
+    <header class="hero custom-hero">
+        <div class="hero-content custom-hero-content">
+            <h1 id="hero-title" class="custom-hero-title">When seconds decide life, <br><span class="gradient-text">we respond instantly.</span></h1>
+            <p id="hero-sub" class="custom-hero-sub">AI-powered emergency response system connecting help instantly. One tap saves lives.</p>
+            
+            <div class="sos-container">
+                <div class="ripple"></div>
+                <div class="ripple ripple-2"></div>
+                <div class="ripple ripple-3"></div>
+                
+                <div id="circular-text-container" class="circular-text"></div>
+                
+                <button class="sos-button">SOS</button>
+            </div>
+        </div>
+    </header>
+    
+        <!-- AMBULANCE ANIMATION SECTION -->
+        <div class="ambulance-section">
+            <!-- Road Line underneath the ambulance -->
+            <div class="road-line"></div>
+            <div class="ambulance-mover">
+                <img src="ambulace Background Removed.png" alt="Ambulance" class="ambulance-img">
+            </div>
+        </div>
+
+    <!-- 
+        =============================================
+        STORY & FEATURE SECTIONS
+        A sequence of side-by-side text/image blocks explaining the product.
+        Images have 'reveal-img' for parallax, text has 'reveal' for fade-ins.
+        =============================================
+    -->
+    <main>
+        <!-- 1. REPORTER: Explains the user-facing SOS app -->
+        <section class="story-section">
+            <div class="container">
+                <div class="story-grid">
+                    <div class="img-box reveal-img">
+                        <img src="Untitled design.png" alt="User App Interface">
+                    </div>
+                    <div class="text-box reveal">
+                        <h2>Rapid SOS<br>Intelligence.</h2>
+                        <p>Citizens trigger help with a single gesture. The system instantly captures location, medical profile, and live data, bypassing traditional delays.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. ADMIN: Explains the dispatcher dashboard (Image on Right via 'reverse' class) -->
+        <section class="story-section reverse">
+            <div class="container">
+                <div class="story-grid">
+                    <div class="text-box reveal">
+                        <h2>Centralized<br>Command Hub.</h2>
+                        <p>Dispatcher dashboards provide a bird's-eye view of every incident. Predictive AI prioritizes critical cases and suggests the fastest path to resolution.</p>
+                    </div>
+                    <div class="img-box reveal-img">
+                        <img src="admin.png" alt="Admin Control Dashboard">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. VOLUNTEER: Explains the responder network -->
+        <section class="story-section">
+            <div class="container">
+                <div class="story-grid">
+                    <div class="img-box reveal-img">
+                        <img src="WhatsApp Image 2026-04-28 at 21.00.57.png" alt="Ambulance Dispatch">
+                    </div>
+                    <div class="text-box reveal">
+                        <h2>Smart Asset<br>Mobilization.</h2>
+                        <p>No more manual routing. ResQ identifies the nearest qualified responder and pushes optimized turn-by-turn navigation directly to their vehicle.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. DOCTOR: Explains the hospital integration -->
+        <section class="story-section reverse">
+            <div class="container">
+                <div class="story-grid">
+                    <div class="text-box reveal">
+                        <h2>Pre-Arrival<br>Diagnostics.</h2>
+                        <p>Hospitals receive patient telemetry before the ambulance arrives. Doctors are prepared, equipment is ready, and lives are saved in the transition.</p>
+                    </div>
+                    <div class="img-box reveal-img">
+                        <img src="doc1.png" alt="Medical Professional Preparation">
+                    </div>
+                </div>
+            </div>
+            
+        </section>
+ 
+
+
+
+        <!-- 
+            =============================================
+            FEATURE CARDS GRID
+            A 3-column grid highlighting specific platform capabilities.
+            Cards have a strong 3D tilt effect applied via GSAP in the scripts.
+            =============================================
+        -->
+        <section class="features-wrapper">
+            <div class="container">
+                <h2 class="reveal" style="text-align:center; font-size: 2.5rem; margin-bottom: 20px;">System Capabilities</h2>
+                <div class="feature-grid">
+                    
+                    <div class="card-perspective reveal">
+                        <div class="feature-card">
+                            <div class="card-content">
+                                <span class="card-icon">🚨</span>
+                                <h3>SOS Detection</h3>
+                                <p>Automated alerts triggered by biometric anomalies and visual sensors.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-perspective reveal">
+                        <div class="feature-card">
+                            <div class="card-content">
+                                <span class="card-icon">⚡</span>
+                                <h3>Smart Dispatch</h3>
+                                <p>Algorithmic resource allocation based on severity and proximity.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-perspective reveal">
+                        <div class="feature-card">
+                            <div class="card-content">
+                                <span class="card-icon">📍</span>
+                                <h3>Live Tracking</h3>
+                                <p>Real-time GPS telemetry for every responder and caller in the network.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-perspective reveal">
+                        <div class="feature-card">
+                            <div class="card-content">
+                                <span class="card-icon">🤝</span>
+                                <h3>Volunteer Net</h3>
+                                <p>Mobilizing certified local professionals for immediate first-aid support.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-perspective reveal">
+                        <div class="feature-card">
+                            <div class="card-content">
+                                <span class="card-icon">🔧</span>
+                                <h3>System Integration</h3>
+                                <p>Seamlessly connects with existing municipal emergency infrastructure and hospital databases.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-perspective reveal">
+                        <div class="feature-card">
+                            <div class="card-content">
+                                <span class="card-icon">🛡️</span>
+                                <h3>Data Security</h3>
+                                <p>End-to-end encryption ensures all personal and medical information remains strictly confidential.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FINAL SECTION -->
+    <section class="final-cta">
+        <div class="container reveal">
+            <h2>Start saving lives.</h2>
+            <a href="Login.html" class="btn-red">Get Started</a>
+        </div>
+    </section>
+
+    <script>
+        // Feature: Animation Library Registration
+        // We register the ScrollTrigger plugin with GSAP so we can trigger animations when the user scrolls down the page.
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Feature: Hero Load Animation
+        window.addEventListener('load', () => {
+            gsap.from("#hero-title", { opacity: 0, y: 60, duration: 1.5, ease: "power4.out" });
+            gsap.from("#hero-sub", { opacity: 0, y: 30, duration: 1.5, ease: "power4.out", delay: 0.3 });
+            gsap.from(".sos-container", { opacity: 0, scale: 0.8, duration: 1.5, ease: "elastic.out(1, 0.5)", delay: 0.6 });
+            gsap.from(".ambulance-section", { opacity: 0, duration: 2, delay: 1 });
+        });
+
+        // Feature: Scroll Reveal Animations for Text
+        // Find every element with the class '.reveal' and set up a scroll animation for it.
+        document.querySelectorAll('.reveal').forEach(el => {
+            gsap.to(el, {
+                scrollTrigger: {
+                    trigger: el, // The element itself is the trigger
+                    start: "top 85%", // Start animation when the top of the element hits 85% down the viewport
+                    toggleActions: "play none none reverse" // Play when scrolling down, reverse when scrolling back up
+                },
+                opacity: 1, // Fade in
+                y: 0,       // Slide up to original position
+                duration: 1.2,
+                ease: "power3.out"
+            });
+        });
+
+        // Feature: Scroll Reveal Animations for Images (Parallax)
+        // Find every element with the class '.reveal-img' and add a parallax scroll effect.
+        document.querySelectorAll('.reveal-img').forEach(img => {
+            gsap.to(img, {
+                scrollTrigger: {
+                    trigger: img,
+                    start: "top 80%",
+                    scrub: 0.5 // "Scrub" links the animation directly to the scrollbar movement, smoothing it out over 0.5s
+                },
+                opacity: 1, // Fade in
+                scale: 1,   // Ensure it's at normal size
+                y: -30,     // Subtle Parallax effect: The image moves up slightly faster than the page scrolls
+                duration: 1.5,
+                ease: "power2.out"
+            });
+        });
+
+        // Feature: Custom 3D Strong Tilt Engine for Feature Cards
+        // This adds an interactive 3D tilt effect to the feature cards when the user hovers their mouse over them.
+        const cards = document.querySelectorAll('.feature-card');
+        
+        cards.forEach(card => {
+            // When the mouse moves over the card
+            card.addEventListener('mousemove', (e) => {
+                // Get the card's dimensions and exact position on screen
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Find the center of the card
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                // Calculate rotation angles. 
+                // Using a smaller divisor (10) makes the tilt intensity much stronger and "noticeable".
+                const rotateX = (centerY - y) / 10; 
+                const rotateY = (x - centerX) / 10;
+
+                // Animate the card instantly based on mouse position
+                gsap.to(card, {
+                    rotateX: rotateX,
+                    rotateY: rotateY,
+                    scale: 1.04, // Slightly enlarge the card when hovered
+                    duration: 0.3,
+                    ease: "power2.out",
+                    overwrite: true // Prevent animation conflicts
+                });
+            });
+
+            // When the mouse leaves the card
+            card.addEventListener('mouseleave', () => {
+                // Reset the card back to its flat state
+                gsap.to(card, {
+                    rotateX: 0,
+                    rotateY: 0,
+                    scale: 1, // Reset scale
+                    duration: 0.6,
+                    ease: "elastic.out(1, 0.6)" // Add a slight bouncy "elastic" effect as it settles
+                });
+            });
+        });
+
+        // Feature: Circular Text Init
+        const textStr = "EMERGENCY • RESPONSE • INSTANT • HELP • RESQ • ";
+        const container = document.getElementById('circular-text-container');
+        const chars = textStr.split('');
+        const radius = 175; // Distance from center
+
+        chars.forEach((char, i) => {
+            const span = document.createElement('span');
+            span.innerText = char;
+            const angle = (i * 360) / chars.length;
+            span.style.transform = `rotate(${angle}deg) translateY(-${radius}px)`;
+            container.appendChild(span);
+        });
+    </script>
+</body>
+</html>

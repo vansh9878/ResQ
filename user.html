@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResQ | Dashboard</title>
+    
+    <!-- Typography & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <!-- Puter AI -->
+    <script src="https://js.puter.com/v2/"></script>
+    <link rel="stylesheet" href="ai-assistant.css">
+
+    <style>
+        /* --- GLOBAL VARIABLES --- */
+        /* These define the color palette, typography scaling, and animation easing used across the dashboard */
+        :root {
+            --primary: #e53935; /* Main brand color (Red) */
+            --bg: #f8f9fa; /* Light grey background for areas outside the main content */
+            --sidebar-bg: #ffffff; /* Pure white for the sidebar */
+            --text: #1d1d1f; /* Dark grey/almost black for primary text (easier on eyes than pure black) */
+            --text-light: #6e6e73; /* Lighter grey for secondary text */
+            --white: #ffffff; 
+            --ease: cubic-bezier(0.28, 0.11, 0.32, 1); /* Apple-style smooth animation curve */
+            --border: 1px solid rgba(0, 0, 0, 0.05); /* Very subtle borders for depth */
+        }
+
+        /* --- CSS RESET --- */
+        /* Removes default browser margins/padding to ensure consistent rendering */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased; /* Makes text look sharper on Mac/iOS devices */
+        }
+
+        /* --- BASE STYLES --- */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--white);
+            color: var(--text);
+            display: flex; /* Setup for a side-by-side layout (sidebar + main content) */
+            height: 100vh; /* Take up the full height of the browser window */
+            overflow: hidden; /* Prevent scrolling on the main window */
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 240px;
+            background: var(--sidebar-bg);
+            border-right: var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 40px 20px;
+            height: 100%;
+            z-index: 100;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: -1px;
+            margin-bottom: 50px;
+            padding-left: 10px;
+        }
+        .logo span { color: var(--primary); }
+
+        .menu-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s var(--ease);
+        }
+
+        .menu-item i { width: 20px; height: 20px; }
+
+        .menu-item:hover {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .menu-item.active {
+            background: rgba(229, 57, 53, 0.08);
+            color: var(--primary);
+        }
+
+        /* --- MAIN CONTENT AREA --- */
+        /* This is where the main SOS button and status cards will live */
+        .main-content {
+            flex: 1; /* Take up the remaining width next to the sidebar */
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Creates a very subtle red glow behind the center of the screen */
+            background: radial-gradient(circle at 50% 50%, rgba(229, 57, 53, 0.03) 0%, transparent 60%);
+        }
+
+        /* --- SOS BUTTON UI --- */
+        .sos-wrapper {
+            text-align: center;
+            z-index: 10;
+        }
+
+        /* The big red emergency button */
+        .sos-btn {
+            width: 300px;
+            height: 300px;
+            background: var(--primary);
+            border: none;
+            border-radius: 50%; /* Make it a perfect circle */
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 20px 40px rgba(229, 57, 53, 0.3); /* Deep red shadow for 3D effect */
+            transition: transform 0.3s var(--ease);
+        }
+
+        /* Pushing down the button visually when clicked */
+        .sos-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* The text inside the button */
+        .sos-btn span {
+            color: white;
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: 2px;
+        }
+
+        /* Pulse Animation Element (The expanding ring behind the button) */
+        .sos-btn::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--primary);
+            border-radius: 50%;
+            z-index: -1;
+            animation: pulse 2.5s infinite;
+            opacity: 0.4;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.4; }
+            70% { transform: scale(1.4); opacity: 0; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+
+        .sos-hint {
+            margin-top: 30px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            font-weight: 400;
+        }
+
+        /* --- COUNTDOWN OVERLAY --- */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            visibility: hidden;
+            opacity: 0;
+        }
+
+        .countdown-num {
+            font-size: 8rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .overlay h2 {
+            font-size: 1.5rem;
+            margin-bottom: 40px;
+            font-weight: 600;
+        }
+
+        .btn-cancel {
+            padding: 14px 40px;
+            border-radius: 30px;
+            border: 2px solid #ddd;
+            background: transparent;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel:hover {
+            background: #f1f1f1;
+            border-color: #bbb;
+        }
+
+        /* --- SUCCESS STATUS UI --- */
+        .status-container {
+            width: 400px;
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+        }
+
+        .status-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border: var(--border);
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            color: #2e7d32;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .status-item:last-child { border-bottom: none; }
+
+        .status-item span {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+        }
+
+        .check-icon { color: #2e7d32; }
+        .loading-icon { animation: rotate 2s linear infinite; color: var(--text-light); }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .response-time {
+            margin-top: 25px;
+            text-align: center;
+            padding: 20px;
+            background: var(--bg);
+            border-radius: 12px;
+        }
+
+        .response-time h4 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-light);
+            margin-bottom: 5px;
+        }
+
+        .response-time p {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 
+        =============================================
+        SIDEBAR NAVIGATION
+        Contains the app logo and links to other pages.
+        =============================================
+    -->
+    <aside class="sidebar">
+        <div class="logo"><span>●</span> ResQ</div>
+        <ul class="menu-list">
+            <li><a href="user-dashboard.html" class="menu-item"><i data-lucide="layout-grid"></i> Dashboard</a></li>
+            <li><a href="user.html" class="menu-item active"><i data-lucide="alert-circle"></i> SOS</a></li>
+            <li><a href="user-report.html" class="menu-item"><i data-lucide="file-text"></i> Report</a></li>
+            <li><a href="user-map.html" class="menu-item"><i data-lucide="map"></i> Map</a></li>
+            <li><a href="volunter.html" class="menu-item"><i data-lucide="users"></i> Volunteer</a></li>
+            <li><a href="user-profile.html" class="menu-item"><i data-lucide="user"></i> Profile</a></li>
+        </ul>
+    </aside>
+
+    <!-- 
+        =============================================
+        MAIN CONTENT AREA
+        Contains the SOS interface, countdown, and success states.
+        =============================================
+    -->
+    <main class="main-content">
+        
+        <!-- INITIAL SOS STATE: The default view with the big red button -->
+        <div class="sos-wrapper" id="sosMain">
+            <button class="sos-btn" id="sosTrigger">
+                <span>SOS</span>
+            </button>
+            <p class="sos-hint">Press and hold or click once to trigger emergency alert</p>
+        </div>
+
+        <!-- COUNTDOWN OVERLAY -->
+        <div class="overlay" id="countdownOverlay">
+            <div class="countdown-num" id="countdownTimer">10</div>
+            <h2>Sending Emergency Alert...</h2>
+            <button class="btn-cancel" id="cancelBtn">Cancel Request</button>
+        </div>
+
+        <!-- SUCCESS STATUS UI -->
+        <div class="status-container" id="statusContainer">
+            <div class="status-card">
+                <div class="status-header">
+                    <i data-lucide="check-circle-2" size="32"></i>
+                    <h3>Alert Sent Successfully</h3>
+                </div>
+                
+                <div class="status-list">
+                    <div class="status-item">
+                        <span>Admin Notified</span>
+                        <i data-lucide="check" class="check-icon" size="18"></i>
+                    </div>
+                    <div class="status-item">
+                        <span>Volunteers Alerted</span>
+                        <i data-lucide="check" class="check-icon" size="18"></i>
+                    </div>
+                    <div class="status-item">
+                        <span>Finding nearest hospital...</span>
+                        <i data-lucide="loader-2" class="loading-icon" size="18"></i>
+                    </div>
+                </div>
+
+                <div class="response-time">
+                    <h4>Est. Response Time</h4>
+                    <p>04:52 mins</p>
+                </div>
+            </div>
+            <button class="btn-cancel" style="width: 100%; margin-top: 20px;" onclick="resetUI()">Back to Dashboard</button>
+        </div>
+
+    </main>
+
+    <script>
+        // Feature: Icon Initialization
+        // Renders all Lucide icons on the page.
+        lucide.createIcons();
+
+        // Feature: DOM Element Selection
+        // We grab all the HTML elements we need to manipulate using JavaScript
+        const sosTrigger = document.getElementById('sosTrigger'); // The big red SOS button
+        const overlay = document.getElementById('countdownOverlay'); // The full-screen blur overlay
+        const timerDisplay = document.getElementById('countdownTimer'); // The giant number showing seconds left
+        const cancelBtn = document.getElementById('cancelBtn'); // The cancel button
+        const sosMain = document.getElementById('sosMain'); // The container holding the main SOS button
+        const statusContainer = document.getElementById('statusContainer'); // The success screen shown after countdown
+
+        // Variables to keep track of the timer
+        let countdown; // This will hold the interval ID so we can stop the timer later
+        let timeLeft = 10; // Start the countdown at 10 seconds
+
+        // Feature: SOS Activation Trigger
+        // When the big red SOS button is clicked, start the emergency sequence
+        sosTrigger.addEventListener('click', () => {
+            startEmergency();
+        });
+
+        // Feature: Emergency Countdown Logic
+        function startEmergency() {
+            // 1. Show the full-screen blur overlay using GSAP animation
+            gsap.to(overlay, { autoAlpha: 1, duration: 0.5, ease: "power2.out" });
+            
+            // 2. Reset the timer just in case it was cancelled before
+            timeLeft = 10;
+            timerDisplay.innerText = timeLeft;
+
+            // 3. Start a repeating timer that runs every 1000ms (1 second)
+            countdown = setInterval(() => {
+                timeLeft--; // Subtract 1 second
+                timerDisplay.innerText = timeLeft; // Update the number on screen
+
+                // If the timer reaches 0...
+                if (timeLeft <= 0) {
+                    clearInterval(countdown); // Stop the timer from running in the background
+                    showSuccess(); // Trigger the success screen
+                }
+            }, 1000);
+        }
+
+        // Feature: Cancel Emergency
+        // If the user clicks cancel before 10 seconds are up...
+        cancelBtn.addEventListener('click', () => {
+            clearInterval(countdown); // Stop the timer immediately
+            gsap.to(overlay, { autoAlpha: 0, duration: 0.3 }); // Hide the blur overlay
+        });
+
+        // Feature: Success Screen Transition
+        // Runs when the 10-second countdown successfully finishes
+        function showSuccess() {
+            // 1. Hide the blur overlay and the original SOS button smoothly
+            gsap.to(overlay, { autoAlpha: 0, duration: 0.4 });
+            gsap.to(sosMain, { autoAlpha: 0, duration: 0.4 });
+
+            // 2. Wait 0.5 seconds for things to fade out, then slide in the success card
+            setTimeout(() => {
+                gsap.to(statusContainer, { autoAlpha: 1, y: -20, duration: 0.8, ease: "power3.out" });
+            }, 500);
+        }
+
+        // Feature: UI Reset
+        // Allows the user to go back to the original SOS button state from the success screen
+        function resetUI() {
+            // Hide the success card
+            gsap.to(statusContainer, { autoAlpha: 0, y: 0, duration: 0.4 });
+            // Wait 0.5 seconds, then show the big red SOS button again
+            setTimeout(() => {
+                gsap.to(sosMain, { autoAlpha: 1, duration: 0.5 });
+            }, 500);
+        }
+
+        // Feature: Sidebar Navigation Animation
+        // Adds a subtle "pop" animation to the icons in the sidebar when you hover over the text
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                // Scale icon up by 10%
+                gsap.to(item.querySelector('i'), { scale: 1.1, duration: 0.3 });
+            });
+            item.addEventListener('mouseleave', () => {
+                // Scale icon back to normal size
+                gsap.to(item.querySelector('i'), { scale: 1, duration: 0.3 });
+            });
+        });
+    </script>
+    <script src="ai-assistant.js"></script>
+</body>
+</html>

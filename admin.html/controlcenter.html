@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Crisis Control | System Administration</title>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* =========================================================
+           DESIGN SYSTEM & 3D VARIABLES
+           ========================================================= */
+        :root {
+            /* Core Theme Colors */
+            --primary-red: #e53935;
+            --primary-red-hover: #b71c1c;
+            --primary-red-glow: rgba(229, 57, 53, 0.25);
+
+            --white: #ffffff;
+            --bg-color: #f4f6f8;
+            /* Slightly darker background for contrast */
+            --text-dark: #333333;
+            --text-muted: #86868b;
+            --border-light: rgba(0, 0, 0, 0.08);
+
+            /* Apple UI specific */
+            --control-bg: #e5e5ea;
+            --control-bg-active: #ffffff;
+
+            /* 3D Shadows & Elevations */
+            --shadow-base: 0 4px 15px rgba(0, 0, 0, 0.04);
+            --shadow-lift: 0 15px 35px rgba(0, 0, 0, 0.08), 0 6px 15px rgba(0, 0, 0, 0.04);
+            --shadow-inner: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+
+            /* Transitions */
+            --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            display: block;
+            /* Support sidebar layout */
+            position: relative;
+        }
+
+        /* Custom Scrollbar for the page */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d1d1d6;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #c7c7cc;
+        }
+
+        /* =========================================================
+           AMBIENT 3D BACKGROUND
+           ========================================================= */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.6;
+            animation: floatOrb 25s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .orb-1 {
+            width: 450px;
+            height: 450px;
+            background: rgba(229, 57, 53, 0.08);
+            top: -100px;
+            right: -50px;
+        }
+
+        .orb-2 {
+            width: 550px;
+            height: 550px;
+            background: rgba(0, 0, 0, 0.04);
+            bottom: -150px;
+            left: -100px;
+            animation-delay: -5s;
+        }
+
+        @keyframes floatOrb {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate(-40px, 50px) scale(1.1);
+            }
+
+            100% {
+                transform: translate(50px, -30px) scale(0.9);
+            }
+        }
+
+        /* =========================================================
+           SIDEBAR
+           ========================================================= */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-right: 1px solid var(--border-light);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            padding: 32px 0;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+        }
+
+        .sidebar-header {
+            padding: 0 32px;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-red);
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-header .icon-box {
+            background: var(--primary-red);
+            color: white;
+            padding: 8px;
+            border-radius: 12px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 16px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: var(--transition-smooth);
+        }
+
+        .sidebar-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-item.active {
+            background: var(--white);
+            color: var(--primary-red);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+        }
+
+        .sidebar-item:hover:not(.active) {
+            background: rgba(0, 0, 0, 0.03);
+            color: var(--text-dark);
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 0 16px;
+        }
+
+        /* =========================================================
+           CONTENT WRAPPER (Accommodates Sidebar)
+           ========================================================= */
+        .content-wrapper {
+            margin-left: 260px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* =========================================================
+           TOP BAR (Sticky for constant control access)
+           ========================================================= */
+        header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            z-index: 100;
+            position: sticky;
+            top: 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(52, 199, 89, 0.1);
+            color: #28a745;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(52, 199, 89, 0.2);
+            transition: var(--transition-smooth);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            animation: pulseGreen 2s infinite;
+        }
+
+        @keyframes pulseGreen {
+            0% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 6px rgba(40, 167, 69, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+            }
+        }
+
+        /* =========================================================
+           FLUID & ACCOMMODATING GRID
+           ========================================================= */
+        .main-container {
+            flex: 1;
+            padding: 40px 32px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .control-grid {
+            display: grid;
+            /* Auto-fit ensures cards fill available space and wrap automatically */
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1400px;
+            perspective: 1500px;
+        }
+
+        /* =========================================================
+           CONTROL MODULES (CARDS)
+           ========================================================= */
+        .control-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-base);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            transform-style: preserve-3d;
+            transition: var(--transition-bounce);
+            animation: floatCard 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) backwards;
+            min-height: 320px;
+        }
+
+        .control-card:nth-child(1) {
+            animation-delay: 0.05s;
+        }
+
+        .control-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .control-card:nth-child(3) {
+            animation-delay: 0.15s;
+        }
+
+        .control-card:nth-child(4) {
+            animation-delay: 0.2s;
+        }
+
+        .control-card:nth-child(5) {
+            animation-delay: 0.25s;
+        }
+
+        .control-card:nth-child(6) {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes floatCard {
+            from {
+                opacity: 0;
+                transform: translateY(40px) rotateX(10deg);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) rotateX(0deg);
+            }
+        }
+
+        .control-card:hover {
+            transform: translateY(-6px) translateZ(15px);
+            box-shadow: var(--shadow-lift);
+            border-color: rgba(229, 57, 53, 0.15);
+            z-index: 5;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-light);
+            transform: translateZ(10px);
+        }
+
+        .card-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.03);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+        }
+
+        .card-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transform: translateZ(5px);
+        }
+
+        /* =========================================================
+           UI CONTROLS (Toggles, Sliders, Dropdowns)
+           ========================================================= */
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .control-label {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            line-height: 1.3;
+        }
+
+        /* Apple-Style Toggle Switch */
+        .toggle {
+            appearance: none;
+            width: 50px;
+            height: 28px;
+            background: var(--control-bg);
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            outline: none;
+            transition: var(--transition-smooth);
+            box-shadow: var(--shadow-inner);
+            flex-shrink: 0;
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: var(--white);
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: var(--transition-bounce);
+        }
+
+        .toggle:checked {
+            background: var(--primary-red);
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1), var(--shadow-red-glow);
+        }
+
+        .toggle:checked::after {
+            transform: translateX(22px);
+        }
+
+        /* Segmented Control */
+        .segmented-control {
+            display: flex;
+            background: var(--control-bg);
+            padding: 5px;
+            border-radius: 12px;
+            position: relative;
+            width: 100%;
+            box-shadow: var(--shadow-inner);
+        }
+
+        .segment {
+            flex: 1;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 8px 0;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: var(--transition-smooth);
+            z-index: 1;
+        }
+
+        .segment.active {
+            background: var(--white);
+            color: var(--text-dark);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .segment.critical.active {
+            color: var(--primary-red);
+        }
+
+        /* Range Slider */
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--control-bg);
+            outline: none;
+            transition: var(--transition-smooth);
+            box-shadow: var(--shadow-inner);
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--white);
+            border: 2px solid var(--primary-red);
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+            transition: var(--transition-bounce);
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 5px 12px rgba(229, 57, 53, 0.4);
+        }
+
+        /* Custom Select */
+        .custom-select {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            background: var(--white);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23333%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 16px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+            transition: var(--transition-smooth);
+        }
+
+        .custom-select:focus {
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 4px rgba(229, 57, 53, 0.15);
+        }
+
+        /* Multi-select Pills */
+        .pill-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pill {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: var(--control-bg);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: var(--transition-bounce);
+        }
+
+        .pill.active {
+            background: rgba(229, 57, 53, 0.1);
+            color: var(--primary-red);
+            border-color: rgba(229, 57, 53, 0.3);
+            box-shadow: 0 2px 8px rgba(229, 57, 53, 0.15);
+        }
+
+        .pill:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Compact Scrollable List */
+        .compact-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow-y: auto;
+            flex: 1;
+            max-height: 150px;
+            padding-right: 8px;
+        }
+
+        /* Buttons */
+        .btn-outline {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px dashed #d1d1d6;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary-red);
+            color: var(--primary-red);
+            background: rgba(229, 57, 53, 0.05);
+        }
+
+        .mt-auto {
+            margin-top: auto;
+        }
+
+        .label-sm {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* =========================================================
+           RESPONSIVE ACCOMMODATION
+           ========================================================= */
+        @media (max-width: 900px) {
+            .sidebar {
+                display: none;
+            }
+
+            .content-wrapper {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 16px 20px;
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .main-container {
+                padding: 24px 16px;
+            }
+
+            .control-grid {
+                gap: 20px;
+            }
+
+            .control-card {
+                min-height: auto;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Ambient 3D Background -->
+    <div class="ambient-bg">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+    </div>
+
+    <!-- Unified Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="icon-box">
+                <i class="fa-solid fa-shield-heart"></i>
+            </div>
+            RESCUE
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard1.html" class="sidebar-item">
+                <i class="fa-solid fa-chart-line"></i> Dashboard
+            </a>
+            <a href="cases1.html" class="sidebar-item">
+                <i class="fa-solid fa-kit-medical"></i> Active Cases
+            </a>
+            <a href="trace1.html" class="sidebar-item">
+                <i class="fa-solid fa-map-location-dot"></i> Live Map
+            </a>
+            <a href="responder.html" class="sidebar-item">
+                <i class="fa-solid fa-user-group"></i> Responders
+            </a>
+            <a href="notification.html" class="sidebar-item">
+                <i class="fa-solid fa-bell"></i> Notifications
+            </a>
+        </nav>
+        <div class="sidebar-bottom">
+            <!-- Active tag set to Settings for Administration Panel -->
+            <a href="controlcenter.html" class="sidebar-item active">
+                <i class="fa-solid fa-gear"></i> Settings
+            </a>
+        </div>
+    </aside>
+
+    <!-- Content Wrapper to offset for sidebar -->
+    <div class="content-wrapper">
+
+        <!-- Header -->
+        <header>
+            <div class="header-title">
+                Emergency Control Center
+            </div>
+            <div class="header-status">
+                <div class="pulse-dot"></div> System Active & Syncing
+            </div>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="main-container">
+            <div class="control-grid">
+
+                <!-- 1. ALERT CONTROL MODULE -->
+                <div class="control-card">
+                    <div class="card-header">
+                        <div class="card-icon" style="color: var(--primary-red);"><i class="fa-solid fa-bell"></i></div>
+                        <div class="card-title">Alert Logic</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="control-row">
+                            <span class="control-label">Fire Alerts</span>
+                            <input type="checkbox" class="toggle" checked>
+                        </div>
+                        <div class="control-row">
+                            <span class="control-label">Flood Alerts</span>
+                            <input type="checkbox" class="toggle" checked>
+                        </div>
+                        <div class="control-row">
+                            <span class="control-label">Medical Alerts</span>
+                            <input type="checkbox" class="toggle" checked>
+                        </div>
+
+                        <div class="mt-auto">
+                            <span class="label-sm">Default Alert Priority</span>
+                            <div class="segmented-control">
+                                <div class="segment" onclick="selectSegment(this)">Low</div>
+                                <div class="segment" onclick="selectSegment(this)">Med</div>
+                                <div class="segment active critical" onclick="selectSegment(this)">Critical</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. AI CONTROL MODULE -->
+                <div class="control-card">
+                    <div class="card-header">
+                        <div class="card-icon" style="color: #6366f1;"><i class="fa-solid fa-brain"></i></div>
+                        <div class="card-title">AI Engine</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="control-row">
+                            <span class="control-label">Enable AI Suggestions</span>
+                            <input type="checkbox" class="toggle" checked>
+                        </div>
+                        <div class="control-row">
+                            <span class="control-label">Auto-Recommend Actions</span>
+                            <input type="checkbox" class="toggle">
+                        </div>
+
+                        <div class="slider-container mt-auto">
+                            <span class="label-sm">AI Sensitivity Level</span>
+                            <input type="range" min="1" max="100" value="75" class="slider">
+                            <div class="slider-labels">
+                                <span>Low</span>
+                                <span>Balanced</span>
+                                <span>High</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. ZONE CONTROL MODULE -->
+                <div class="control-card">
+                    <div class="card-header">
+                        <div class="card-icon" style="color: #007aff;"><i class="fa-solid fa-map-location-dot"></i>
+                        </div>
+                        <div class="card-title">Zone Configuration</div>
+                    </div>
+                    <div class="card-content">
+                        <div>
+                            <span class="label-sm">Active Command Zone</span>
+                            <select class="custom-select">
+                                <option>Zone 1 (South)</option>
+                                <option>Zone 2 (East)</option>
+                                <option selected>Zone 3 (North Central)</option>
+                                <option>Zone 4 (West)</option>
+                            </select>
+                        </div>
+
+                        <div class="mt-auto">
+                            <span class="label-sm">Cross-Zone Monitoring</span>
+                            <div class="pill-container">
+                                <div class="pill active" onclick="this.classList.toggle('active'); showSyncFeedback();">
+                                    Zone 1</div>
+                                <div class="pill active" onclick="this.classList.toggle('active'); showSyncFeedback();">
+                                    Zone 2</div>
+                                <div class="pill" onclick="this.classList.toggle('active'); showSyncFeedback();">Zone 4
+                                </div>
+                                <div class="pill" onclick="this.classList.toggle('active'); showSyncFeedback();">
+                                    Outskirts</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. RESPONDER CONTROL MODULE -->
+                <div class="control-card">
+                    <div class="card-header">
+                        <div class="card-icon" style="color: #f59e0b;"><i class="fa-solid fa-users-gear"></i></div>
+                        <div class="card-title">Responder Fleet</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="compact-list">
+                            <div class="control-row">
+                                <span class="control-label"><i class="fa-solid fa-truck-medical"
+                                        style="color:var(--text-muted); margin-right:8px;"></i> Med-Evac 1</span>
+                                <input type="checkbox" class="toggle" checked>
+                            </div>
+                            <div class="control-row">
+                                <span class="control-label"><i class="fa-solid fa-fire-extinguisher"
+                                        style="color:var(--text-muted); margin-right:8px;"></i> Engine 44</span>
+                                <input type="checkbox" class="toggle" checked>
+                            </div>
+                            <div class="control-row">
+                                <span class="control-label"><i class="fa-solid fa-helmet-safety"
+                                        style="color:var(--text-muted); margin-right:8px;"></i> Rescue Squad A</span>
+                                <input type="checkbox" class="toggle">
+                            </div>
+                            <div class="control-row">
+                                <span class="control-label"><i class="fa-solid fa-hand-holding-heart"
+                                        style="color:var(--text-muted); margin-right:8px;"></i> NGO Relief Unit</span>
+                                <input type="checkbox" class="toggle" checked>
+                            </div>
+                        </div>
+
+                        <button class="btn-outline mt-auto">
+                            <i class="fa-solid fa-plus"></i> Add Responder
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 5. NOTIFICATION LOGIC MODULE -->
+                <div class="control-card">
+                    <div class="card-header">
+                        <div class="card-icon" style="color: #e83e8c;"><i class="fa-solid fa-share-nodes"></i></div>
+                        <div class="card-title">Routing Rules</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="control-row">
+                            <span class="control-label">Auto-Assign Units</span>
+                            <input type="checkbox" class="toggle">
+                        </div>
+                        <div class="control-row">
+                            <span class="control-label">Broadcast All Alerts</span>
+                            <input type="checkbox" class="toggle" checked>
+                        </div>
+
+                        <div class="mt-auto">
+                            <span class="label-sm">Priority Fallback Routing</span>
+                            <select class="custom-select">
+                                <option selected>Proximity Based</option>
+                                <option>Availability Based</option>
+                                <option>Strict Protocol Order</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. ACCESS CONTROL MODULE -->
+                <div class="control-card">
+                    <div class="card-header">
+                        <div class="card-icon" style="color: #20c997;"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div class="card-title">Access Control</div>
+                    </div>
+                    <div class="card-content">
+                        <div>
+                            <span class="label-sm">Base Role Config</span>
+                            <div class="segmented-control">
+                                <div class="segment" onclick="selectSegment(this)">Viewer</div>
+                                <div class="segment active" onclick="selectSegment(this)">Operator</div>
+                                <div class="segment" onclick="selectSegment(this)">Super Admin</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto">
+                            <div class="control-row" style="margin-bottom: 15px;">
+                                <span class="control-label">Edit Configurations</span>
+                                <input type="checkbox" class="toggle">
+                            </div>
+                            <div class="control-row">
+                                <span class="control-label">Assign Units Manually</span>
+                                <input type="checkbox" class="toggle" checked>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JS for Segmented Controls interaction
+        function selectSegment(element) {
+            const parent = element.parentElement;
+            const siblings = parent.querySelectorAll('.segment');
+            siblings.forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+
+            showSyncFeedback();
+        }
+
+        // Event listeners for all inputs to show live "Syncing" feedback
+        const inputs = document.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            input.addEventListener('change', showSyncFeedback);
+        });
+
+        // Instant visual feedback when controls are modified
+        function showSyncFeedback() {
+            const statusBox = document.querySelector('.header-status');
+
+            // Syncing state
+            statusBox.style.color = '#86868b';
+            statusBox.style.borderColor = 'rgba(142, 142, 147, 0.3)';
+            statusBox.style.background = 'rgba(142, 142, 147, 0.1)';
+            statusBox.innerHTML = '<div class="pulse-dot" style="background:#86868b; animation:none;"></div> Syncing changes...';
+
+            // Return to active state after a brief delay simulating server sync
+            setTimeout(() => {
+                statusBox.style.color = '#28a745';
+                statusBox.style.borderColor = 'rgba(52, 199, 89, 0.2)';
+                statusBox.style.background = 'rgba(52, 199, 89, 0.1)';
+                statusBox.innerHTML = '<div class="pulse-dot"></div> System Active & Syncing';
+            }, 800);
+        }
+    </script>
+</body>
+
+</html>

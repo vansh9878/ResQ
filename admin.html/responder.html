@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Crisis Control | Live Resource Monitor</title>
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* =========================================================
+           DESIGN SYSTEM & VARIABLES
+           ========================================================= */
+        :root {
+            /* Core Theme Colors */
+            --primary-red: #e53935;
+            --primary-red-hover: #b71c1c;
+            --bg-color: #f8f9fa;
+            --text-dark: #333333;
+            --text-muted: #86868b;
+            --border-light: rgba(0, 0, 0, 0.06);
+
+            /* Status Colors */
+            --status-active: #28a745;
+            --status-busy: #f59e0b;
+            --status-offline: #86868b;
+
+            /* Glass & Base Settings */
+            --white: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-blur: blur(20px);
+
+            /* Elevations & Styling */
+            --radius-main: 12px;
+            --shadow-soft: 0 4px 15px rgba(0, 0, 0, 0.03);
+            --shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.08);
+
+            /* Transitions */
+            --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            position: relative;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d1d1d6;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1aa;
+        }
+
+        /* =========================================================
+           AMBIENT BACKGROUND
+           ========================================================= */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: floatOrb 25s infinite alternate ease-in-out;
+        }
+
+        .orb-1 {
+            width: 450px;
+            height: 450px;
+            background: rgba(229, 57, 53, 0.06);
+            top: -100px;
+            right: -50px;
+        }
+
+        .orb-2 {
+            width: 550px;
+            height: 550px;
+            background: rgba(0, 0, 0, 0.03);
+            bottom: -150px;
+            left: -100px;
+            animation-delay: -5s;
+        }
+
+        @keyframes floatOrb {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate(-40px, 50px) scale(1.1);
+            }
+
+            100% {
+                transform: translate(50px, -30px) scale(0.9);
+            }
+        }
+
+        /* =========================================================
+           SIDEBAR
+           ========================================================= */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: var(--glass-blur);
+            border-right: 1px solid var(--border-light);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            padding: 32px 0;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+        }
+
+        .sidebar-header {
+            padding: 0 32px;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-red);
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-header .icon-box {
+            background: var(--primary-red);
+            color: var(--white);
+            padding: 8px;
+            border-radius: var(--radius-main);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 16px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius-main);
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: var(--transition-smooth);
+        }
+
+        .sidebar-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-item.active {
+            background: var(--white);
+            color: var(--primary-red);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+        }
+
+        .sidebar-item:hover:not(.active) {
+            background: rgba(0, 0, 0, 0.03);
+            color: var(--text-dark);
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 0 16px;
+        }
+
+        /* =========================================================
+           MAIN CONTENT AREA
+           ========================================================= */
+        .content-wrapper {
+            margin-left: 260px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            z-index: 10;
+        }
+
+        header {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-light);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .live-indicator {
+            width: 8px;
+            height: 8px;
+            background: var(--status-active);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 6px rgba(40, 167, 69, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+            }
+        }
+
+        .main-container {
+            padding: 32px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        /* =========================================================
+           FILTERS
+           ========================================================= */
+        .filter-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: -10px;
+        }
+
+        .filter-btn {
+            background: var(--white);
+            border: 1px solid var(--border-light);
+            padding: 10px 20px;
+            border-radius: var(--radius-main);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .filter-btn.active {
+            background: var(--text-dark);
+            color: var(--white);
+            border-color: var(--text-dark);
+        }
+
+        .filter-btn:hover:not(.active) {
+            background: #f0f0f5;
+            color: var(--text-dark);
+        }
+
+        /* =========================================================
+           GLOBAL OVERVIEW CARDS
+           ========================================================= */
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border-radius: var(--radius-main);
+            padding: 20px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border-light);
+            transition: var(--transition-smooth);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .stat-card.primary {
+            border-left: 4px solid var(--primary-red);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .stat-header i {
+            font-size: 1.2rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            line-height: 1;
+        }
+
+        .stat-breakdown {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            padding-top: 8px;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .dot.active {
+            background: var(--status-active);
+        }
+
+        .dot.busy {
+            background: var(--status-busy);
+        }
+
+        .dot.offline {
+            background: var(--status-offline);
+        }
+
+        /* Nudge Animation for live updates */
+        @keyframes highlightUpdate {
+            0% {
+                background-color: var(--white);
+            }
+
+            50% {
+                background-color: rgba(229, 57, 53, 0.05);
+            }
+
+            100% {
+                background-color: var(--white);
+            }
+        }
+
+        .update-anim {
+            animation: highlightUpdate 1s ease;
+        }
+
+        /* =========================================================
+           CURRENT INCIDENT HIGHLIGHT
+           ========================================================= */
+        .incident-card {
+            background: linear-gradient(135deg, rgba(229, 57, 53, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+            border-radius: var(--radius-main);
+            padding: 24px;
+            border: 1px solid rgba(229, 57, 53, 0.2);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .incident-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .incident-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-red);
+            margin-bottom: 4px;
+        }
+
+        .incident-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .incident-total {
+            text-align: right;
+        }
+
+        .incident-total span {
+            display: block;
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--text-dark);
+        }
+
+        .incident-total label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .incident-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+        }
+
+        .inc-stat {
+            background: var(--white);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .inc-stat i {
+            color: var(--primary-red);
+            font-size: 1.2rem;
+        }
+
+        .inc-stat div strong {
+            display: block;
+            font-size: 1.1rem;
+            color: var(--text-dark);
+        }
+
+        .inc-stat div span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* =========================================================
+           EXPANDABLE LISTS (ACCORDION)
+           ========================================================= */
+        .lists-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .accordion {
+            background: var(--white);
+            border-radius: var(--radius-main);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+            transition: var(--transition-smooth);
+        }
+
+        .accordion-header {
+            padding: 18px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background: var(--white);
+            user-select: none;
+            transition: var(--transition-smooth);
+        }
+
+        .accordion-header:hover {
+            background: #fafafa;
+        }
+
+        .acc-title {
+            font-weight: 600;
+            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .acc-count {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .acc-icon {
+            transition: transform 0.3s ease;
+            color: var(--text-muted);
+        }
+
+        .accordion.open .acc-icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion.open {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background: var(--white);
+        }
+
+        .accordion-inner {
+            padding: 0 24px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* List Items */
+        .resource-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 2fr 1.5fr 1.5fr;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            transition: var(--transition-smooth);
+        }
+
+        .resource-row:hover {
+            border-color: rgba(0, 0, 0, 0.15);
+            background: var(--white);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .r-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .r-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        .r-id {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .r-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-active {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--status-active);
+        }
+
+        .badge-busy {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--status-busy);
+        }
+
+        .badge-offline {
+            background: rgba(134, 134, 139, 0.1);
+            color: var(--status-offline);
+        }
+
+        .r-task,
+        .r-location {
+            font-size: 0.85rem;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .r-task i,
+        .r-location i {
+            color: var(--text-muted);
+        }
+
+        .r-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn-action {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            background: var(--white);
+            cursor: pointer;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-action:hover {
+            background: var(--bg-color);
+            color: var(--text-dark);
+        }
+
+        .btn-action.reassign:hover {
+            color: var(--update-blue, #007aff);
+            border-color: rgba(0, 122, 255, 0.3);
+        }
+
+        .btn-action.contact:hover {
+            color: var(--status-active);
+            border-color: rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-action.remove:hover {
+            color: var(--primary-red);
+            border-color: rgba(229, 57, 53, 0.3);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .resource-row {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+
+            .r-actions {
+                grid-column: span 3;
+                justify-content: flex-start;
+                padding-top: 8px;
+                border-top: 1px dashed var(--border-light);
+                margin-top: 8px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                display: none;
+            }
+
+            .content-wrapper {
+                margin-left: 0;
+            }
+
+            .main-container {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .resource-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .r-actions {
+                grid-column: span 1;
+            }
+
+            .stat-breakdown {
+                flex-direction: column;
+                gap: 4px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Ambient Background -->
+    <div class="ambient-bg">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="icon-box"><i class="fa-solid fa-shield-heart"></i></div>
+            RESCUE
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="sidebar-item"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+            <a href="cases1.html" class="sidebar-item"><i class="fa-solid fa-kit-medical"></i> Active Cases</a>
+            <a href="trace1.html" class="sidebar-item"><i class="fa-solid fa-map-location-dot"></i> Live
+                Map</a>
+            <!-- Active tag moved to Responders -->
+            <a href="responder.html" class="sidebar-item active"><i class="fa-solid fa-user-group"></i> Responders</a>
+            <a href="notification.html" class="sidebar-item"><i class="fa-solid fa-bell"></i> Notifications</a>
+        </nav>
+        <div class="sidebar-bottom">
+            <a href="controlcenter.html" class="sidebar-item"><i class="fa-solid fa-gear"></i> Settings</a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="content-wrapper">
+        <header>
+            <div class="header-title">
+                Live Resource & Team Monitor
+            </div>
+            <div class="header-status"
+                style="font-size: 0.85rem; font-weight: 600; display:flex; align-items:center; gap:8px;">
+                <div class="live-indicator"></div> Live Sync Active
+            </div>
+        </header>
+
+        <div class="main-container">
+
+            <!-- Filters -->
+            <div class="filter-controls">
+                <button class="filter-btn active" onclick="toggleFilter(this)">All Resources</button>
+                <button class="filter-btn" onclick="toggleFilter(this)">Active in Current Incident</button>
+            </div>
+
+            <!-- Global Overview Grid -->
+            <div>
+                <div class="section-title">Global Resource Overview</div>
+                <div class="overview-grid">
+
+                    <div class="stat-card primary" id="stat-total">
+                        <div class="stat-header">Total Fleet <i class="fa-solid fa-users"
+                                style="color:var(--primary-red)"></i></div>
+                        <div class="stat-value">284</div>
+                        <div class="stat-breakdown">
+                            <span class="status-item">
+                                <div class="dot active"></div> 142
+                            </span>
+                            <span class="status-item">
+                                <div class="dot busy"></div> 98
+                            </span>
+                            <span class="status-item">
+                                <div class="dot offline"></div> 44
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">Ambulances 🚑</div>
+                        <div class="stat-value" id="val-amb">45</div>
+                        <div class="stat-breakdown">
+                            <span class="status-item">
+                                <div class="dot active"></div> 30
+                            </span>
+                            <span class="status-item">
+                                <div class="dot busy"></div> 12
+                            </span>
+                            <span class="status-item">
+                                <div class="dot offline"></div> 3
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">Doctors 👨‍⚕️</div>
+                        <div class="stat-value" id="val-doc">82</div>
+                        <div class="stat-breakdown">
+                            <span class="status-item">
+                                <div class="dot active"></div> 40
+                            </span>
+                            <span class="status-item">
+                                <div class="dot busy"></div> 32
+                            </span>
+                            <span class="status-item">
+                                <div class="dot offline"></div> 10
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">Hospitals 🏥</div>
+                        <div class="stat-value">14</div>
+                        <div class="stat-breakdown">
+                            <span class="status-item">
+                                <div class="dot active"></div> 12
+                            </span>
+                            <span class="status-item">
+                                <div class="dot busy"></div> 2
+                            </span>
+                            <span class="status-item">
+                                <div class="dot offline"></div> 0
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">NGOs 🤝</div>
+                        <div class="stat-value">18</div>
+                        <div class="stat-breakdown">
+                            <span class="status-item">
+                                <div class="dot active"></div> 10
+                            </span>
+                            <span class="status-item">
+                                <div class="dot busy"></div> 6
+                            </span>
+                            <span class="status-item">
+                                <div class="dot offline"></div> 2
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">Volunteers 🙋</div>
+                        <div class="stat-value" id="val-vol">125</div>
+                        <div class="stat-breakdown">
+                            <span class="status-item">
+                                <div class="dot active"></div> 50
+                            </span>
+                            <span class="status-item">
+                                <div class="dot busy"></div> 46
+                            </span>
+                            <span class="status-item">
+                                <div class="dot offline"></div> 29
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Current Incident Participation -->
+            <div class="incident-card">
+                <div class="incident-header">
+                    <div>
+                        <h3 class="incident-title">Assigned to Current Emergency</h3>
+                        <div class="incident-subtitle">INC-4029: Industrial Fire - Sector 4</div>
+                    </div>
+                    <div class="incident-total">
+                        <label>Total Deployed</label>
+                        <span id="inc-total">86</span>
+                    </div>
+                </div>
+                <div class="incident-stats-grid">
+                    <div class="inc-stat">
+                        <i class="fa-solid fa-truck-medical"></i>
+                        <div><strong id="inc-amb">12</strong><span>Ambulances</span></div>
+                    </div>
+                    <div class="inc-stat">
+                        <i class="fa-solid fa-user-doctor"></i>
+                        <div><strong id="inc-doc">24</strong><span>Doctors</span></div>
+                    </div>
+                    <div class="inc-stat">
+                        <i class="fa-solid fa-handshake-angle"></i>
+                        <div><strong id="inc-ngo">5</strong><span>NGO Teams</span></div>
+                    </div>
+                    <div class="inc-stat">
+                        <i class="fa-solid fa-users"></i>
+                        <div><strong id="inc-vol">45</strong><span>Volunteers</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expandable Lists -->
+            <div class="lists-container">
+                <div class="section-title" style="margin-bottom:0;">Resource Directory</div>
+
+                <!-- Accordion 1: Ambulances -->
+                <div class="accordion open">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="acc-title">🚑 Ambulances <span class="acc-count">45</span></div>
+                        <i class="fa-solid fa-chevron-down acc-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-inner">
+
+                            <div class="resource-row">
+                                <div class="r-info">
+                                    <span class="r-name">Med-Evac Unit 44</span>
+                                    <span class="r-id">ID: AMB-4492</span>
+                                </div>
+                                <div class="r-status">
+                                    <span class="status-badge badge-active">
+                                        <div class="dot active"></div> Active
+                                    </span>
+                                </div>
+                                <div class="r-task"><i class="fa-solid fa-clipboard-list"></i> Transporting Patient
+                                </div>
+                                <div class="r-location"><i class="fa-solid fa-location-dot"></i> Sector 4 Route</div>
+                                <div class="r-actions">
+                                    <button class="btn-action reassign" title="Reassign"><i
+                                            class="fa-solid fa-rotate"></i></button>
+                                    <button class="btn-action contact" title="Contact"><i
+                                            class="fa-solid fa-walkie-talkie"></i></button>
+                                    <button class="btn-action remove" title="Remove"><i
+                                            class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+
+                            <div class="resource-row">
+                                <div class="r-info">
+                                    <span class="r-name">City Hospital Unit 2</span>
+                                    <span class="r-id">ID: AMB-1022</span>
+                                </div>
+                                <div class="r-status">
+                                    <span class="status-badge badge-busy">
+                                        <div class="dot busy"></div> Busy
+                                    </span>
+                                </div>
+                                <div class="r-task"><i class="fa-solid fa-clipboard-list"></i> En route to scene</div>
+                                <div class="r-location"><i class="fa-solid fa-location-dot"></i> Highway 12</div>
+                                <div class="r-actions">
+                                    <button class="btn-action reassign" title="Reassign"><i
+                                            class="fa-solid fa-rotate"></i></button>
+                                    <button class="btn-action contact" title="Contact"><i
+                                            class="fa-solid fa-walkie-talkie"></i></button>
+                                    <button class="btn-action remove" title="Remove"><i
+                                            class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+
+                            <div class="resource-row">
+                                <div class="r-info">
+                                    <span class="r-name">Reserve Unit B</span>
+                                    <span class="r-id">ID: AMB-8831</span>
+                                </div>
+                                <div class="r-status">
+                                    <span class="status-badge badge-offline">
+                                        <div class="dot offline"></div> Offline
+                                    </span>
+                                </div>
+                                <div class="r-task"><i class="fa-solid fa-clipboard-list"></i> Maintenance</div>
+                                <div class="r-location"><i class="fa-solid fa-location-dot"></i> Depot South</div>
+                                <div class="r-actions">
+                                    <button class="btn-action reassign" title="Reassign"><i
+                                            class="fa-solid fa-rotate"></i></button>
+                                    <button class="btn-action contact" title="Contact"><i
+                                            class="fa-solid fa-walkie-talkie"></i></button>
+                                    <button class="btn-action remove" title="Remove"><i
+                                            class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accordion 2: Doctors -->
+                <div class="accordion">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="acc-title">👨‍⚕️ Doctors & Medical Staff <span class="acc-count">82</span></div>
+                        <i class="fa-solid fa-chevron-down acc-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-inner">
+                            <div class="resource-row">
+                                <div class="r-info">
+                                    <span class="r-name">Dr. Sarah Jenkins</span>
+                                    <span class="r-id">Trauma Specialist</span>
+                                </div>
+                                <div class="r-status">
+                                    <span class="status-badge badge-active">
+                                        <div class="dot active"></div> Active
+                                    </span>
+                                </div>
+                                <div class="r-task"><i class="fa-solid fa-clipboard-list"></i> Triage Command</div>
+                                <div class="r-location"><i class="fa-solid fa-location-dot"></i> Sector 4 Staging</div>
+                                <div class="r-actions">
+                                    <button class="btn-action reassign"><i class="fa-solid fa-rotate"></i></button>
+                                    <button class="btn-action contact"><i class="fa-solid fa-phone"></i></button>
+                                    <button class="btn-action remove"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                            <div class="resource-row">
+                                <div class="r-info">
+                                    <span class="r-name">Dr. Rahul Sharma</span>
+                                    <span class="r-id">General Surgery</span>
+                                </div>
+                                <div class="r-status">
+                                    <span class="status-badge badge-busy">
+                                        <div class="dot busy"></div> Busy
+                                    </span>
+                                </div>
+                                <div class="r-task"><i class="fa-solid fa-clipboard-list"></i> In Surgery</span></div>
+                                <div class="r-location"><i class="fa-solid fa-location-dot"></i> City Hospital ER</div>
+                                <div class="r-actions">
+                                    <button class="btn-action reassign"><i class="fa-solid fa-rotate"></i></button>
+                                    <button class="btn-action contact"><i class="fa-solid fa-phone"></i></button>
+                                    <button class="btn-action remove"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accordion 3: NGOs -->
+                <div class="accordion">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <div class="acc-title">🤝 NGOs & Relief <span class="acc-count">18</span></div>
+                        <i class="fa-solid fa-chevron-down acc-icon"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="accordion-inner">
+                            <div class="resource-row">
+                                <div class="r-info">
+                                    <span class="r-name">Red Cross Unit Alpha</span>
+                                    <span class="r-id">ID: NGO-110</span>
+                                </div>
+                                <div class="r-status">
+                                    <span class="status-badge badge-active">
+                                        <div class="dot active"></div> Active
+                                    </span>
+                                </div>
+                                <div class="r-task"><i class="fa-solid fa-clipboard-list"></i> Supplying Water/Food
+                                </div>
+                                <div class="r-location"><i class="fa-solid fa-location-dot"></i> Sector 4 Perimeter
+                                </div>
+                                <div class="r-actions">
+                                    <button class="btn-action reassign"><i class="fa-solid fa-rotate"></i></button>
+                                    <button class="btn-action contact"><i
+                                            class="fa-solid fa-walkie-talkie"></i></button>
+                                    <button class="btn-action remove"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Set initial heights for open accordions
+        document.addEventListener("DOMContentLoaded", () => {
+            const accordions = document.querySelectorAll('.accordion.open');
+            accordions.forEach(acc => {
+                const content = acc.querySelector('.accordion-content');
+                content.style.maxHeight = content.scrollHeight + "px";
+            });
+        });
+
+        // Accordion Toggle Function
+        function toggleAccordion(element) {
+            const accordion = element.parentElement;
+            const content = accordion.querySelector('.accordion-content');
+
+            if (accordion.classList.contains('open')) {
+                accordion.classList.remove('open');
+                content.style.maxHeight = '0';
+            } else {
+                // Optional: Close others (uncomment to enable)
+                /*
+                document.querySelectorAll('.accordion.open').forEach(openAcc => {
+                    openAcc.classList.remove('open');
+                    openAcc.querySelector('.accordion-content').style.maxHeight = '0';
+                });
+                */
+                accordion.classList.add('open');
+                content.style.maxHeight = content.scrollHeight + "px";
+            }
+        }
+
+        // Filter Toggle Function
+        function toggleFilter(element) {
+            const buttons = element.parentElement.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+
+            // Visual feedback - simulate data loading
+            document.querySelector('.lists-container').style.opacity = '0.5';
+            setTimeout(() => {
+                document.querySelector('.lists-container').style.opacity = '1';
+            }, 300);
+        }
+
+        // Simulate Live Data Nudging
+        setInterval(() => {
+            // Pick a random stat to update
+            const stats = [
+                { id: 'val-amb', min: 40, max: 48 },
+                { id: 'val-doc', min: 80, max: 85 },
+                { id: 'val-vol', min: 120, max: 130 },
+                { id: 'inc-total', min: 80, max: 92 }
+            ];
+
+            const target = stats[Math.floor(Math.random() * stats.length)];
+            const el = document.getElementById(target.id);
+            if (el) {
+                // Generate a slight variance
+                let current = parseInt(el.innerText);
+                let change = Math.random() > 0.5 ? 1 : -1;
+                let newVal = current + change;
+
+                // Keep within bounds
+                if (newVal > target.max) newVal = target.max;
+                if (newVal < target.min) newVal = target.min;
+
+                if (current !== newVal) {
+                    el.innerText = newVal;
+                    // Trigger flash animation
+                    const parentCard = el.closest('.stat-card') || el.closest('.incident-card');
+                    if (parentCard) {
+                        parentCard.classList.remove('update-anim');
+                        void parentCard.offsetWidth; // trigger reflow
+                        parentCard.classList.add('update-anim');
+                    }
+                }
+            }
+        }, 3500); // Trigger every 3.5 seconds
+    </script>
+</body>
+
+</html>

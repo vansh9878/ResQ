@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rewards Marketplace | RESCUE OS Premium</title>
+
+    <!-- Design Assets -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #e53935;
+            --primary-dark: #b71c1c;
+            --apple-bg: #f5f5f7;
+            --glass: rgba(255, 255, 255, 0.75);
+            --text-dark: #1d1d1f;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--apple-bg);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            letter-spacing: -0.01em;
+        }
+
+        /* --- THREE.JS BACKGROUND --- */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* --- GLASSMORPHISM SYSTEM --- */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(28px) saturate(190%);
+            -webkit-backdrop-filter: blur(28px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 26px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* --- SIDEBAR (Strictly Consistent) --- */
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border-radius: 16px;
+            color: #8e8e93;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        .sidebar-link.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .sidebar-link:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.4);
+            color: var(--text-dark);
+        }
+
+        /* --- MARKETPLACE COMPONENTS --- */
+        .balance-card {
+            background: linear-gradient(135deg, #e53935 0%, #b71c1c 100%);
+            color: white;
+            box-shadow: 0 20px 40px rgba(229, 57, 53, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .reward-card {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .reward-card:hover {
+            transform: scale(1.02) translateY(-5px);
+            border-color: var(--primary);
+        }
+
+        .reward-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.1));
+        }
+
+        /* --- BUTTONS --- */
+        .btn-redeem {
+            background: var(--primary);
+            color: white;
+            padding: 10px 0;
+            width: 100%;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 13px;
+            transition: 0.3s;
+        }
+
+        .btn-redeem:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(229, 57, 53, 0.3);
+        }
+
+        .btn-redeem:disabled {
+            background: #e5e5e7;
+            color: #a1a1a6;
+            cursor: not-allowed;
+        }
+
+        /* --- TOAST NOTIFICATION --- */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 30px;
+            background: #1d1d1f;
+            color: white;
+            border-radius: 15px;
+            transform: translateY(100px);
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #toast.show {
+            transform: translateY(0);
+        }
+
+        /* --- ANIMATIONS --- */
+        .floating {
+            animation: float 5s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+
+<body class="flex h-screen p-5 gap-5">
+
+    <div id="canvas-container"></div>
+    <div id="toast"><i class="fa-solid fa-circle-check text-green-500"></i> <span id="toast-msg">Reward Redeemed!</span>
+    </div>
+
+    <!-- Sidebar (Consistent Mission Control) -->
+    <aside class="w-[300px] h-full glass-panel flex flex-col p-7 hidden lg:flex">
+        <div class="flex items-center gap-4 mb-12 px-2">
+            <div class="bg-red-600 p-2.5 rounded-2xl">
+                <i class="fa-solid fa-satellite-dish text-white text-lg"></i>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight text-gray-800">RESCUE<span class="text-red-600">OS</span></h1>
+        </div>
+
+        <nav class="space-y-2 flex-1">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 px-3">Mission Control</p>
+            <a href="dashboar.html" class="sidebar-link">
+                <i class="fa-solid fa-house-chimney w-6 text-center"></i> Dashboard
+            </a>
+            <a href="request.html" class="sidebar-link">
+                <i class="fa-solid fa-fire-extinguisher w-6 text-center"></i> Active Cases
+            </a>
+            <a href="tracking.html" class="sidebar-link">
+                <i class="fa-solid fa-map-location-dot w-6 text-center"></i> Tactical Map
+            </a>
+            <a href="credit.html" class="sidebar-link ">
+                <i class="fa-solid fa-clock-rotate-left w-6 text-center"></i> Incident History
+            </a>
+            <a href="profile.html" class="sidebar-link">
+                <i class="fa-solid fa-user-gear w-6 text-center"></i> Profile Settings
+            </a>
+        </nav>
+
+        <div class="mt-auto glass-panel p-4 bg-white/20 border-dashed border-2 text-center">
+            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Marketplace Access</p>
+            <p class="text-xs font-bold text-gray-800">Verified Responder</p>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-y-auto space-y-8">
+
+        <!-- Top Balance HUD -->
+        <section class="balance-card glass-panel p-10 flex flex-col items-center justify-center text-center floating">
+            <p class="text-[10px] font-black uppercase tracking-[0.4em] opacity-70 mb-2">Available Mission Credits</p>
+            <div class="flex items-center gap-4">
+                <i class="fa-solid fa-coins text-4xl text-yellow-400"></i>
+                <h2 class="text-7xl font-black tracking-tighter" id="credit-balance">1,250</h2>
+            </div>
+            <p class="text-sm font-medium mt-4 opacity-80 italic">"Your service protects the community. Use your credits
+                wisely."</p>
+        </section>
+
+        <!-- Category Filters -->
+        <div class="flex gap-4 px-2">
+            <button
+                class="bg-white px-6 py-2 rounded-full text-xs font-bold shadow-sm border border-gray-100 hover:text-red-600 transition">All
+                Rewards</button>
+            <button
+                class="bg-white/50 px-6 py-2 rounded-full text-xs font-bold border border-gray-100 hover:text-red-600 transition">Utility</button>
+            <button
+                class="bg-white/50 px-6 py-2 rounded-full text-xs font-bold border border-gray-100 hover:text-red-600 transition">Recognition</button>
+            <button
+                class="bg-white/50 px-6 py-2 rounded-full text-xs font-bold border border-gray-100 hover:text-red-600 transition">Boosts</button>
+        </div>
+
+        <!-- Rewards Grid -->
+        <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 pb-4">
+
+            <!-- Item 1 -->
+            <div class="glass-panel p-8 reward-card">
+                <div class="reward-icon">⛽</div>
+                <h3 class="text-lg font-bold">Fuel Voucher</h3>
+                <p class="text-xs text-gray-500 mt-2 mb-6 leading-relaxed">Redeem for a $50 fuel card at any partner
+                    emergency refueling station.</p>
+                <div class="mt-auto">
+                    <p class="text-sm font-black mb-3">200 <span class="text-[10px] text-gray-400">CREDITS</span></p>
+                    <button class="btn-redeem" onclick="redeem(200, 'Fuel Voucher')">Redeem Reward</button>
+                </div>
+            </div>
+
+            <!-- Item 2 -->
+            <div class="glass-panel p-8 reward-card">
+                <div class="reward-icon">🎒</div>
+                <h3 class="text-lg font-bold">Medical Kit Access</h3>
+                <p class="text-xs text-gray-500 mt-2 mb-6 leading-relaxed">Upgrade your basic medical kit to the
+                    Advanced Trauma Responder series.</p>
+                <div class="mt-auto">
+                    <p class="text-sm font-black mb-3">500 <span class="text-[10px] text-gray-400">CREDITS</span></p>
+                    <button class="btn-redeem" onclick="redeem(500, 'Medical Kit')">Redeem Reward</button>
+                </div>
+            </div>
+
+            <!-- Item 3 -->
+            <div class="glass-panel p-8 reward-card">
+                <div class="reward-icon">📜</div>
+                <h3 class="text-lg font-bold">Advanced Training</h3>
+                <p class="text-xs text-gray-500 mt-2 mb-6 leading-relaxed">Enroll in the specialized Airborne Rescue &
+                    Navigation certification course.</p>
+                <div class="mt-auto">
+                    <p class="text-sm font-black mb-3">800 <span class="text-[10px] text-gray-400">CREDITS</span></p>
+                    <button class="btn-redeem" onclick="redeem(800, 'Training Course')">Redeem Reward</button>
+                </div>
+            </div>
+
+            <!-- Item 4 -->
+            <div class="glass-panel p-8 reward-card">
+                <div class="reward-icon">🏅</div>
+                <h3 class="text-lg font-bold">Elite Responder Badge</h3>
+                <p class="text-xs text-gray-500 mt-2 mb-6 leading-relaxed">Exclusive profile flair and physical patch
+                    for high-performance responders.</p>
+                <div class="mt-auto">
+                    <p class="text-sm font-black mb-3">1,000 <span class="text-[10px] text-gray-400">CREDITS</span></p>
+                    <button class="btn-redeem" onclick="redeem(1000, 'Elite Badge')">Redeem Reward</button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Transaction History -->
+        <section class="glass-panel p-8">
+            <h3 class="text-lg font-bold mb-6">Recent Redemptions</h3>
+            <div class="overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr
+                            class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                            <th class="pb-4">Reward Item</th>
+                            <th class="pb-4">Category</th>
+                            <th class="pb-4">Date</th>
+                            <th class="pb-4 text-right">Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50" id="history-body">
+                        <tr>
+                            <td class="py-4 font-bold">Priority Assignment Boost</td>
+                            <td class="py-4 text-gray-500 italic">Utility</td>
+                            <td class="py-4 text-gray-400">Oct 24, 2023</td>
+                            <td class="py-4 text-right font-bold text-red-600">-300</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- THREE.JS 3D BACKGROUND ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const geometry = new THREE.IcosahedronGeometry(15, 1);
+        const material = new THREE.MeshBasicMaterial({ color: 0xe53935, wireframe: true, transparent: true, opacity: 0.05 });
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
+        camera.position.z = 30;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            mesh.rotation.y += 0.001;
+            mesh.rotation.x += 0.0005;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // --- CREDIT MANAGEMENT LOGIC ---
+        let currentCredits = localStorage.getItem('userCredits') ? parseInt(localStorage.getItem('userCredits')) : 1250;
+
+        function updateUI() {
+            document.getElementById('credit-balance').innerText = currentCredits.toLocaleString();
+            localStorage.setItem('userCredits', currentCredits);
+
+            const buttons = document.querySelectorAll('.btn-redeem');
+            buttons.forEach(btn => {
+                const cost = parseInt(btn.previousElementSibling.innerText);
+                if (currentCredits < cost) {
+                    btn.disabled = true;
+                    btn.innerText = "Insufficient Credits";
+                } else {
+                    btn.disabled = false;
+                    btn.innerText = "Redeem Reward";
+                }
+            });
+        }
+
+        function redeem(cost, name) {
+            if (currentCredits >= cost) {
+                currentCredits -= cost;
+                updateUI();
+
+                // Add to table
+                const table = document.getElementById('history-body');
+                const row = table.insertRow(0);
+                row.className = "fade-in";
+                row.innerHTML = `<td class="py-4 font-bold text-gray-800">${name}</td><td class="py-4 text-gray-500 italic">Marketplace</td><td class="py-4 text-gray-400">Just Now</td><td class="py-4 text-right font-bold text-red-600">-${cost}</td>`;
+
+                // Toast
+                const toast = document.getElementById('toast');
+                document.getElementById('toast-msg').innerText = `Redeemed ${name}!`;
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initialize
+        updateUI();
+    </script>
+</body>
+
+</html>

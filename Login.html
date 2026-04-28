@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResQ | Secure Access</title>
+    
+    <!-- Fonts & GSAP -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        /* --- GLOBAL VARIABLES & DESIGN SYSTEM --- */
+        /* Defines the core color palette and animation settings for the login page */
+        :root {
+            --primary: #e53935; /* Signature brand color (Red) */
+            --bg: #fffff; /* Main background */
+            --text: #1d1d1f; /* Dark text for headings */
+            --text-light: #6e6e73; /* Lighter text for subtitles */
+            --white: #ffffff;
+            --ease: cubic-bezier(0.28, 0.11, 0.32, 1); /* Apple-style elastic easing curve */
+            --shadow: 0 20px 40px rgba(0,0,0,0.08); /* Soft drop shadow for elements */
+        }
+
+        /* --- CSS RESET --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased; /* Better text rendering */
+        }
+
+        /* --- BASE LAYOUT --- */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--white);
+            height: 100vh; /* Full viewport height */
+            display: flex;
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            overflow: hidden; /* Prevent scrolling, login should fit on screen */
+            color: var(--text);
+        }
+
+        /* --- AMBIENT BACKGROUND ANIMATION --- */
+        /* Creates the floating colorful blobs behind the main login card */
+        .page-bg {
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background: var(--bg);
+            overflow: hidden;
+        }
+
+        /* The two glowing orbs */
+        .page-bg::before, .page-bg::after {
+            content: '';
+            position: absolute;
+            width: 50vw;
+            height: 50vw;
+            border-radius: 50%;
+            filter: blur(80px); /* Makes them look like soft glowing light rather than circles */
+            z-index: 0;
+            opacity: 0.6;
+            animation: float 10s ease-in-out infinite alternate; /* Slowly moves them around */
+        }
+
+        .page-bg::before {
+            background: rgba(229, 57, 53, 0.52); /* Reddish Accent */
+            top: -10%;
+            left: -10%;
+        }
+
+        .page-bg::after {
+            background: rgba(229, 57, 53, 0.); /* Secondary Accent */
+            bottom: -10%;
+            right: -10%;
+            animation-delay: -5s; /* Stagger the animation so they move differently */
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, 30px) scale(1.05); }
+        }
+
+        /* --- MAIN AUTHENTICATION CONTAINER --- */
+        /* The large white glass-like card holding the forms */
+        .auth-container {
+            width: 1000px;
+            height: 640px;
+            background: var(--white);
+            border-radius: 32px;
+            display: flex;
+            position: relative;
+            /* Complex stacked shadows to create physical depth */
+            box-shadow: 
+                0 40px 80px rgba(0, 0, 0, 0.15),
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(0, 0, 0, 0) inset;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
+        }
+
+        /* Interactive hover effect to make the card 'lift' off the page */
+        .auth-container:hover {
+            transform: scale(1.02);
+            box-shadow: 
+                0 50px 100px rgba(0, 0, 0, 0.2),
+                0 30px 60px rgba(0, 0, 0, 0.12),
+                0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+        }
+
+        /* --- SLIDING VISUAL PANEL --- */
+        /* The panel covering half the card containing the illustration */
+        .visual-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background: var(--bg);
+            z-index: 10; /* Keep it above the forms so it hides the inactive one */
+            transition: transform 0.6s var(--ease); /* The smooth slide animation */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .visual-panel::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle at center, rgba(229,57,53,0.05) 0%, transparent 70%);
+            z-index: 0;
+        }
+
+        .visual-panel img {
+            width: 120%;
+            height: 120%;
+            object-fit: contain;
+            position: absolute;
+            transition: opacity 0.4s ease, transform 0.6s var(--ease);
+            z-index: 1;
+            mix-blend-mode: multiply; /* Blends the image cleanly with the background */
+        }
+
+        /* Initial states for the illustrations */
+        .img-admin { opacity: 0; transform: scale(0.9); }
+        .img-user { opacity: 1; transform: scale(1); }
+
+        /* --- Form Sections --- */
+        .form-wrapper {
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+        }
+
+        .user-wrapper { left: 0; }
+        .admin-wrapper { right: 0; }
+
+        .form-content {
+            width: 100%;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: absolute;
+            opacity: 1;
+        }
+
+        /* Hide forms initially */
+        #signupForm { opacity: 0; pointer-events: none; transform: translateX(20px); }
+        #adminForm { opacity: 0; pointer-events: none; transform: translateX(20px); }
+
+        .auth-container.admin-active .visual-panel {
+            transform: translateX(-100%);
+        }
+
+        /* --- Typography --- */
+        .header { margin-bottom: 24px; }
+        .header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+        .header p { color: var(--text-light); font-size: 0.95rem; line-height: 1.4; }
+
+        /* --- Controls & Inputs --- */
+        .mode-toggle {
+            display: flex;
+            background: var(--bg);
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            width: fit-content;
+        }
+
+        .mode-btn {
+            padding: 8px 24px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 500;
+            font-size: 0.85rem;
+            background: transparent;
+            color: var(--text-light);
+            transition: all 0.3s var(--ease);
+        }
+
+        .mode-btn.active {
+            background: var(--white);
+            color: var(--text);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .input-group { margin-bottom: 16px; }
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            background: var(--bg);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s var(--ease);
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            background: var(--white);
+            box-shadow: 0 0 0 4px rgba(229, 57, 53, 0.08);
+            transform: scale(1.01);
+        }
+
+        /* --- Buttons --- */
+        .btn-main {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+            margin-top: 10px;
+        }
+
+        .btn-main:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(229, 57, 53, 0.2);
+        }
+
+        .otp-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-otp {
+            background: var(--text);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 500;
+            font-size: 0.85rem;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.3s;
+        }
+        
+        .btn-otp:hover {
+            background: #000;
+        }
+
+        .secondary-actions {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .secondary-actions a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .row-inputs {
+            display: flex;
+            gap: 16px;
+        }
+        .row-inputs .input-group {
+            flex: 1;
+        }
+        
+        .home-link {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 100;
+        }
+        .home-link span {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Back to Home link in the top left -->
+    <a href="index.html" class="home-link"><span>●</span> RESQ</a>
+    
+    <!-- The glowing ambient background elements -->
+    <div class="page-bg"></div>
+
+    <!-- 
+        =============================================
+        MAIN AUTHENTICATION CONTAINER
+        Holds both the User forms (left side) and Admin form (right side)
+        =============================================
+    -->
+    <div class="auth-container" id="authBox">
+        
+        <!-- LEFT HALF: USER FORMS -->
+        <div class="form-wrapper user-wrapper">
+            
+            <!-- 1. LOGIN FORM (Visible by default) -->
+            <div class="form-content" id="loginForm">
+                <div class="header">
+                    <h1>Welcome back</h1>
+                    <p>Enter your details to access the network.</p>
+                </div>
+
+                <!-- Toggle to switch to Admin mode -->
+                <div class="mode-toggle">
+                    <button class="mode-btn active">User</button>
+                    <button class="mode-btn" onclick="switchMode('admin')">Admin</button>
+                </div>
+
+                <div class="input-group">
+                    <label>Email or Phone</label>
+                    <input type="text" placeholder="name@example.com">
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" placeholder="••••••••">
+                </div>
+
+                <button class="btn-main" onclick="handleUserLogin()">Sign In</button>
+
+                <div class="secondary-actions">
+                    Don't have an account? <a href="#" onclick="toggleSignup(true); return false;">Sign up</a>
+                </div>
+            </div>
+
+            <!-- 2. SIGNUP FORM (Hidden by default, overlays Login form when requested) -->
+            <div class="form-content" id="signupForm">
+                <div class="header">
+                    <h1>Create Account</h1>
+                    <p>Join the ResQ network to save lives.</p>
+                </div>
+
+                <div class="row-inputs">
+                    <div class="input-group">
+                        <label>First Name</label>
+                        <input type="text" placeholder="John">
+                    </div>
+                    <div class="input-group">
+                        <label>Last Name</label>
+                        <input type="text" placeholder="Doe">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" placeholder="name@example.com">
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" placeholder="••••••••">
+                </div>
+                
+                <div class="input-group">
+                    <label>Confirm Password</label>
+                    <input type="password" placeholder="••••••••">
+                </div>
+
+                <button class="btn-main">Create Account</button>
+
+                <div class="secondary-actions">
+                    Already have an account? <a href="#" onclick="toggleSignup(false); return false;">Sign in</a>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT HALF: ADMIN FORM (Hidden behind visual panel initially) -->
+        <div class="form-wrapper admin-wrapper">
+            <div class="form-content" id="adminForm">
+                <div class="header">
+                    <h1>Control Center</h1>
+                    <p>Authorized personnel only. OTP verification required.</p>
+                </div>
+
+                <!-- Toggle to switch back to User mode -->
+                <div class="mode-toggle">
+                    <button class="mode-btn" onclick="switchMode('user')">User</button>
+                    <button class="mode-btn active">Admin</button>
+                </div>
+
+                <div class="input-group">
+                    <label>Station ID or Email</label>
+                    <div class="otp-row">
+                        <input type="text" id="adminId" placeholder="admin-772">
+                        <button class="btn-otp" onclick="sendFakeOtp()">Send OTP</button>
+                    </div>
+                </div>
+
+                <div class="input-group" id="otpGroup" style="display: none;">
+                    <label>6-Digit Verification Code</label>
+                    <!-- Special styling for OTP input box -->
+                    <input type="text" id="adminOtp" maxlength="6" placeholder="0 0 0 0 0 0" style="text-align: center; letter-spacing: 12px; font-weight: 700;">
+                </div>
+
+                <button class="btn-main" id="btnVerify" onclick="handleAdminLogin()" style="display: none;">Verify & Launch</button>
+
+                <div class="secondary-actions">
+                    Problems signing in? <a href="#">Contact Support</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 
+            =============================================
+            MOVING VISUAL PANEL
+            This div covers 50% of the container and slides left/right 
+            to hide the inactive forms. It contains the decorative illustrations.
+            =============================================
+        -->
+        <div class="visual-panel" id="vPanel">
+            <img src="repoter-login.png" class="img-user" id="userImg" alt="User Visual" onerror="this.src='https://i.ibb.co/XFh6L8k/reporter.webp'">
+            <img src="WhatsApp Image 2026-04-28 at 20.57.21.jpeg" class="img-admin" id="adminImg" alt="Admin Visual" onerror="this.src='https://i.ibb.co/5LqVf5N/admin.webp'">
+        </div>
+
+    </div>
+
+    <script>
+        // Feature: State Management
+        // We need to remember if the user is currently looking at the Login form or the Signup form.
+        // false = Login is visible. true = Signup is visible.
+        let isSignup = false;
+
+        // Feature: User vs Admin Mode Switching
+        // This function handles the complex animation of sliding the image panel and swapping the forms
+        function switchMode(mode) {
+            const container = document.getElementById('authBox');
+            const userImg = document.getElementById('userImg');
+            const adminImg = document.getElementById('adminImg');
+            
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const adminForm = document.getElementById('adminForm');
+
+            if (mode === 'admin') {
+                // Add a class that uses CSS to slide the visual image panel to the left
+                container.classList.add('admin-active');
+                
+                // Hide whichever user form (Login or Signup) is currently visible
+                if (isSignup) {
+                    // GSAP animates opacity to 0 and slides it slightly left (x: -20)
+                    gsap.to(signupForm, { opacity: 0, pointerEvents: "none", x: -20, duration: 0.3 });
+                } else {
+                    gsap.to(loginForm, { opacity: 0, pointerEvents: "none", x: -20, duration: 0.3 });
+                }
+                
+                // Animate the Admin Form coming in from the right
+                gsap.to(adminForm, { opacity: 1, pointerEvents: "auto", x: 0, duration: 0.5, delay: 0.3, ease: "power2.out" });
+
+                // Crossfade the background images inside the sliding panel
+                gsap.to(userImg, { opacity: 0, scale: 0.9, duration: 0.5 });
+                gsap.to(adminImg, { opacity: 1, scale: 1, duration: 0.5 });
+            } else {
+                // Switching back to User mode
+                container.classList.remove('admin-active');
+
+                // Animate Admin Form disappearing to the right
+                gsap.to(adminForm, { opacity: 0, pointerEvents: "none", x: 20, duration: 0.3 });
+                
+                // Bring back whichever user form was active before
+                if (isSignup) {
+                    gsap.to(signupForm, { opacity: 1, pointerEvents: "auto", x: 0, duration: 0.5, delay: 0.3, ease: "power2.out" });
+                } else {
+                    gsap.to(loginForm, { opacity: 1, pointerEvents: "auto", x: 0, duration: 0.5, delay: 0.3, ease: "power2.out" });
+                }
+
+                // Crossfade images back to the user graphic
+                gsap.to(userImg, { opacity: 1, scale: 1, duration: 0.5 });
+                gsap.to(adminImg, { opacity: 0, scale: 0.9, duration: 0.5 });
+            }
+        }
+
+        // Feature: Login Routing
+        function handleUserLogin() {
+            const status = localStorage.getItem('volunteerStatus');
+            if (status === 'approved') {
+                window.location.href = 'responder.html/dashboar.html';
+            } else {
+                window.location.href = 'user.html';
+            }
+        }
+
+        function sendFakeOtp() {
+            const adminId = document.getElementById('adminId').value;
+            if (!adminId) {
+                alert("Please enter Station ID first");
+                return;
+            }
+            alert("OTP Sent to registered device!");
+            document.getElementById('otpGroup').style.display = 'block';
+            document.getElementById('btnVerify').style.display = 'block';
+        }
+
+        function handleAdminLogin() {
+            const otp = document.getElementById('adminOtp').value;
+            if (otp.length === 6) {
+                window.location.href = 'admin.html/dashboard1.html';
+            } else {
+                alert("Please enter a valid 6-digit OTP");
+            }
+        }
+
+        // Feature: Login vs Signup Switching
+        // This toggles between the "Sign In" and "Create Account" forms inside the User section
+        function toggleSignup(showSignup) {
+            isSignup = showSignup; // Update our state variable
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+
+            if (showSignup) {
+                // Hide Login form, show Signup form
+                gsap.to(loginForm, { opacity: 0, pointerEvents: "none", x: -20, duration: 0.3 });
+                gsap.fromTo(signupForm, { opacity: 0, x: 20 }, { opacity: 1, pointerEvents: "auto", x: 0, duration: 0.4, delay: 0.2, ease: "power2.out" });
+            } else {
+                // Hide Signup form, show Login form
+                gsap.to(signupForm, { opacity: 0, pointerEvents: "none", x: -20, duration: 0.3 });
+                gsap.fromTo(loginForm, { opacity: 0, x: 20 }, { opacity: 1, pointerEvents: "auto", x: 0, duration: 0.4, delay: 0.2, ease: "power2.out" });
+            }
+        }
+
+        // Feature: Premium Micro-interactions
+        // Adds a subtle 'pop' scaling effect whenever the user clicks into an input field
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', () => {
+                // Scale up by 2% when focused
+                gsap.to(input, { scale: 1.02, duration: 0.3, ease: "power2.out" });
+            });
+            input.addEventListener('blur', () => {
+                // Return to normal size when clicking away
+                gsap.to(input, { scale: 1, duration: 0.3, ease: "power2.out" });
+            });
+        });
+
+    </script>
+    
+    <!-- Feature: Firebase Backend Initialization -->
+    <!-- This module connects our frontend login page to Google Firebase for secure authentication -->
+    <script type="module">
+        // Import required Firebase core and analytics modules directly from Google's servers
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
+
+        // Configuration object containing the secure keys to connect to our specific ResQ database
+        const firebaseConfig = {
+            apiKey: "AIzaSyCG-7PV7YtIjvQDLg4dayZ14JByvi8DcHg", // Unique API key
+            authDomain: "resq-app-d06c9.firebaseapp.com",       // Firebase hosted domain
+            projectId: "resq-app-d06c9",                        // The name of our project
+            storageBucket: "resq-app-d06c9.firebasestorage.app",// Where files are stored
+            messagingSenderId: "519898267701",
+            appId: "1:519898267701:web:5b575bc1e0660cc24ff17c",  // Our web app's unique ID
+            measurementId: "G-BXH643EJ62"                       // Analytics tracking ID
+        };
+
+        // Initialize the Firebase application with our credentials
+        const app = initializeApp(firebaseConfig);
+        // Start tracking user analytics (like page views)
+        const analytics = getAnalytics(app);
+    </script>
+</body>
+</html>

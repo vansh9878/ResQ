@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResQ | Volunteer Network</title>
+    
+    <!-- Typography & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        /* --- GLOBAL VARIABLES & DESIGN SYSTEM --- */
+        /* Core colors and styles for the volunteer interface */
+        :root {
+            --primary: #e53935; /* Emergency Red */
+            --success: #2e7d32; /* Success Green (used for active status) */
+            --bg: #f8f9fa; /* Background grey */
+            --sidebar-bg: #ffffff; /* White sidebar */
+            --text: #1d1d1f; /* Main text color */
+            --text-light: #6e6e73; /* Subtitle text color */
+            --white: #ffffff;
+            --ease: cubic-bezier(0.28, 0.11, 0.32, 1); /* Smooth Apple-style animations */
+            --border: 1px solid rgba(0, 0, 0, 0.05); /* Soft borders */
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.04); /* Soft elevation shadow */
+            --radius: 24px; /* Rounded corners */
+        }
+
+        /* --- CSS RESET --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- BASE LAYOUT --- */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--white);
+            color: var(--text);
+            display: flex; /* Sidebar + Main content layout */
+            height: 100vh; /* Full screen height */
+            overflow: hidden; /* Prevent page scrolling */
+        }
+
+        /* --- SIDEBAR (Consistent) --- */
+        .sidebar {
+            width: 240px;
+            background: var(--sidebar-bg);
+            border-right: var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 40px 20px;
+            height: 100%;
+            z-index: 100;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: -1px;
+            margin-bottom: 50px;
+            padding-left: 10px;
+        }
+        .logo span { color: var(--primary); }
+
+        .menu-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 16px;
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.3s var(--ease);
+        }
+
+        .menu-item:hover { background: var(--bg); color: var(--text); }
+        .menu-item.active { background: rgba(229, 57, 53, 0.06); color: var(--primary); }
+
+        /* --- MAIN CONTENT AREA --- */
+        .volunteer-main {
+            flex: 1; /* Takes remaining space */
+            overflow-y: auto; /* Allow scrolling here because forms can be tall */
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* Subtle green gradient in the bottom left to imply 'volunteer/go' status */
+            background: radial-gradient(circle at bottom left, rgba(46, 125, 50, 0.02), transparent 400px);
+        }
+
+        /* Center content horizontally and set max width */
+        .content-container { width: 100%; max-width: 800px; }
+
+        header { margin-bottom: 40px; text-align: left; }
+        header h1 { font-size: 2.2rem; font-weight: 700; letter-spacing: -1px; margin-bottom: 10px; }
+        header p { color: var(--text-light); font-size: 1.1rem; }
+
+        /* --- STATUS CARD (Top Banner) --- */
+        /* This banner changes color and text based on the user's current flow state */
+        .status-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 24px 32px;
+            border: var(--border);
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-not-registered { background: #f1f3f5; color: var(--text-light); }
+        .status-pending { background: #fff4e5; color: #d97706; }
+        .status-active { background: #e6f4ea; color: var(--success); }
+
+        /* --- REGISTRATION FORM --- */
+        .view-section { display: none; width: 100%; }
+        .view-section.active { display: block; animation: fadeIn 0.5s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            background: var(--white);
+            padding: 40px;
+            border-radius: var(--radius);
+            border: var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        .input-group.full { grid-column: span 2; }
+        
+        label { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+        
+        input, select {
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            background: var(--bg);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s var(--ease);
+            outline: none;
+        }
+
+        input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(229, 57, 53, 0.05); }
+
+        .file-mock {
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 1px dashed #ccc;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .btn-apply {
+            grid-column: span 2;
+            background: var(--text);
+            color: white;
+            padding: 16px;
+            border-radius: 50px;
+            border: none;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s var(--ease);
+        }
+        .btn-apply:hover { background: var(--primary); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(229, 57, 53, 0.2); }
+
+        /* --- PENDING STATE --- */
+        .pending-card {
+            text-align: center;
+            padding: 60px;
+            background: white;
+            border-radius: var(--radius);
+            border: var(--border);
+            box-shadow: var(--shadow);
+        }
+        .pending-icon { color: #d97706; margin-bottom: 20px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* --- ACTIVE EMERGENCY CARD --- */
+        .emergency-alert-card {
+            background: #fff5f5;
+            border: 2px solid var(--primary);
+            border-radius: var(--radius);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(229, 57, 53, 0.1);
+        }
+
+        .emergency-alert-card h3 { color: var(--primary); font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+        
+        .alert-details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 10px 0; }
+        .detail-item { background: white; padding: 15px; border-radius: 16px; border: var(--border); }
+        .detail-item span { display: block; font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; }
+        .detail-item strong { font-size: 1.1rem; }
+
+        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn-accept { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 50px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .btn-ignore { background: transparent; border: 1px solid #ddd; padding: 16px; border-radius: 50px; font-weight: 600; cursor: pointer; }
+
+        /* --- ACCEPTED FLOW --- */
+        .nav-card {
+            background: var(--text);
+            color: white;
+            padding: 30px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .nav-spinner { width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.2); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo"><span>●</span> ResQ</div>
+        <ul class="menu-list">
+            <li><a href="user-dashboard.html" class="menu-item"><i data-lucide="layout-grid"></i> Dashboard</a></li>
+            <li><a href="user.html" class="menu-item"><i data-lucide="alert-circle"></i> SOS</a></li>
+            <li><a href="user-report.html" class="menu-item"><i data-lucide="file-text"></i> Report</a></li>
+            <li><a href="user-map.html" class="menu-item"><i data-lucide="map"></i> Map</a></li>
+            <li><a href="volunter.html" class="menu-item active"><i data-lucide="users"></i> Volunteer</a></li>
+            <li><a href="user-profile.html" class="menu-item"><i data-lucide="user"></i> Profile</a></li>
+        </ul>
+    </aside>
+
+    <!-- 
+        =============================================
+        MAIN CONTENT: VOLUNTEER WORKFLOW
+        This section acts as a single-page app with 4 different 'views'.
+        Only one view is visible at a time.
+        =============================================
+    -->
+    <main class="volunteer-main">
+        <div class="content-container">
+            
+            <header>
+                <h1>Volunteer Network</h1>
+                <p>Join a community of responders and help save lives nearby.</p>
+            </header>
+
+            <!-- TOP STATUS BANNER (Updates dynamically via JS) -->
+            <div class="status-card">
+                <div>
+                    <h4 style="font-weight: 600;">Account Status</h4>
+                    <p id="status-desc" style="font-size: 0.9rem; color: var(--text-light);">Complete registration to start responding.</p>
+                </div>
+                <span id="status-badge" class="status-badge status-not-registered">Not Registered</span>
+            </div>
+
+            <!-- VIEW 1: REGISTRATION FORM -->
+            <!-- The initial state where users sign up -->
+            <section id="not-registered-view" class="view-section active">
+                <div class="form-grid tilt-card">
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input id="volName" type="text" placeholder="Alex Johnson">
+                    </div>
+                    <div class="input-group">
+                        <label>Phone Number</label>
+                        <input id="volPhone" type="tel" placeholder="+91 98765 43210">
+                    </div>
+                    <div class="input-group">
+                        <label>Aadhaar Number (Verification)</label>
+                        <input id="volAadhaar" type="text" placeholder="0000 0000 0000">
+                    </div>
+                    <div class="input-group">
+                        <label>Driving License</label>
+                        <div class="file-mock"><i data-lucide="upload-cloud" size="18"></i> Upload DL Photo</div>
+                    </div>
+                    <div class="input-group">
+                        <label>Vehicle Type</label>
+                        <select id="volVehicle">
+                            <option>Motorcycle</option>
+                            <option>Car / SUV</option>
+                            <option>None (Pedestrian)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Training Certificate</label>
+                        <div class="file-mock"><i data-lucide="file-text" size="18"></i> First Aid / Medical</div>
+                    </div>
+                    <div class="input-group full">
+                        <label>City / Service Area</label>
+                        <input id="volCity" type="text" placeholder="Mumbai, Maharashtra">
+                    </div>
+                    <button class="btn-apply" onclick="submitApplication()">Apply as Volunteer</button>
+                </div>
+            </section>
+
+            <!-- VIEW 2: PENDING -->
+            <section id="pending-view" class="view-section">
+                <div class="pending-card">
+                    <i data-lucide="clock" class="pending-icon" size="64"></i>
+                    <h2 style="margin-bottom: 10px;">Verification in Progress</h2>
+                    <p style="color: var(--text-light); max-width: 400px; margin: 0 auto;">Our team is reviewing your documents. This usually takes 2-4 hours. You'll be notified once active.</p>
+                </div>
+            </section>
+
+            <!-- VIEW 3: ACTIVE MODE -->
+            <section id="active-view" class="view-section">
+                <div class="emergency-alert-card">
+                    <h3><i data-lucide="bell-ring" class="pending-icon"></i> Emergency Nearby!</h3>
+                    <p style="font-weight: 500; opacity: 0.8;">A medical emergency has been reported within your vicinity.</p>
+                    
+                    <div class="alert-details">
+                        <div class="detail-item">
+                            <span>Incident Type</span>
+                            <strong>Road Accident</strong>
+                        </div>
+                        <div class="detail-item">
+                            <span>Distance</span>
+                            <strong>1.2 km away</strong>
+                        </div>
+                    </div>
+
+                    <div class="action-btns">
+                        <button class="btn-ignore" onclick="ignoreAlert()">Ignore</button>
+                        <button class="btn-accept" onclick="acceptAlert()">Accept Response</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 4: ACCEPTED -->
+            <section id="accepted-view" class="view-section">
+                <div class="nav-card">
+                    <div class="nav-spinner"></div>
+                    <div>
+                        <h4 style="margin-bottom: 2px;">Navigating to location...</h4>
+                        <p style="font-size: 0.85rem; opacity: 0.7;">Route optimized for fast arrival. Rescue in progress.</p>
+                    </div>
+                </div>
+                <button class="btn-ignore" style="width: 100%; margin-top: 20px;" onclick="resetToActive()">Cancel Response</button>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        // Feature: Icon Initialization
+        // Converts all custom Lucide tags (<i data-lucide="...">) into visible SVG icons
+        lucide.createIcons();
+
+        // DOM Elements for updating UI status text
+        const badge = document.getElementById('status-badge');
+        const desc = document.getElementById('status-desc');
+
+        // Feature: View Navigation / State Management
+        // The volunteer page acts like a mini-app with 4 screens (Registration -> Pending -> Active -> Accepted)
+        // This function hides all screens and shows only the requested one.
+        function switchView(viewId) {
+            // Remove 'active' class from all views to hide them
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            // Add 'active' class to the target view to show it
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        // Feature: Application Submission Flow
+        // Triggered when the user clicks "Apply as Volunteer"
+        function submitApplication() {
+            // Gather form data
+            const volData = {
+                name: document.getElementById('volName').value || 'Alex Johnson',
+                phone: document.getElementById('volPhone').value || '+91 98765 43210',
+                aadhar: document.getElementById('volAadhaar').value || '0000 0000 0000',
+                vehicle: document.getElementById('volVehicle').value,
+                city: document.getElementById('volCity').value || 'Mumbai, Maharashtra',
+                serviceArea: document.getElementById('volCity').value || 'Mumbai, Maharashtra',
+                documents: ['driving_license_mock.jpg', 'first_aid_cert_mock.pdf']
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('volunteerData', JSON.stringify(volData));
+            localStorage.setItem('volunteerStatus', 'pending');
+
+            // Update the top status banner to show "Pending"
+            badge.innerText = "Pending Verification";
+            badge.className = "status-badge status-pending";
+            desc.innerText = "Your application is currently being reviewed by an admin.";
+            
+            // Switch from the Registration form to the Pending screen
+            switchView('pending-view');
+        }
+
+        // On page load, check if user is already pending or approved
+        window.addEventListener('DOMContentLoaded', () => {
+            const status = localStorage.getItem('volunteerStatus');
+            if (status === 'pending') {
+                badge.innerText = "Pending Verification";
+                badge.className = "status-badge status-pending";
+                desc.innerText = "Your application is currently being reviewed by an admin.";
+                switchView('pending-view');
+            } else if (status === 'approved') {
+                badge.innerText = "Approved Volunteer";
+                badge.className = "status-badge status-active";
+                desc.innerText = "You are an approved responder.";
+                
+                document.getElementById('pending-view').innerHTML = `
+                    <div class="pending-card">
+                        <i data-lucide="check-circle" class="pending-icon" size="64" style="color: #2e7d32; animation: none;"></i>
+                        <h2 style="margin-bottom: 10px;">Application Approved</h2>
+                        <p style="color: var(--text-light); max-width: 400px; margin: 0 auto; margin-bottom: 20px;">You are now an active responder. Go to your dashboard to see active emergencies.</p>
+                        <button class="btn-apply" onclick="window.location.href='responder.html/dashboar.html'">View Your Volunteer Dashboard</button>
+                    </div>
+                `;
+                lucide.createIcons();
+                switchView('pending-view');
+            }
+        });
+
+        // Volunteer flow now handled in responder dashboard.
+
+        // Feature: 3D Tilt Effect for Application Form
+        // Makes the registration card subtly tilt towards the user's mouse cursor for a premium feel.
+        const cards = document.querySelectorAll('.tilt-card');
+        cards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                // Calculate mouse position relative to the center of the card
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                // Calculate rotation angles. Divide by 25 to keep the tilt very subtle and professional.
+                const rotateX = (centerY - y) / 25;
+                const rotateY = (x - centerX) / 25;
+
+                // Animate the rotation using GSAP
+                gsap.to(card, {
+                    rotateX: rotateX,
+                    rotateY: rotateY,
+                    duration: 0.5,
+                    ease: "power2.out" // Smooth transition
+                });
+            });
+
+            // Reset the card to completely flat when the mouse leaves
+            card.addEventListener('mouseleave', () => {
+                gsap.to(card, { rotateX: 0, rotateY: 0, duration: 0.5 });
+            });
+        });
+    </script>
+</body>
+</html>

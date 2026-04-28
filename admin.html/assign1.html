@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Responder & NGO Assignment Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* =========================================================
+           DESIGN SYSTEM & THEME
+           ========================================================= */
+        :root {
+            --primary-red: #e53935;
+            --primary-hover: #b71c1c;
+            --white: #ffffff;
+            --bg-color: #f8f9fa;
+            --text-dark: #1d1d1f;
+            /* Apple-style deep gray */
+            --text-muted: #86868b;
+            --border-light: rgba(0, 0, 0, 0.08);
+
+            /* Apple Glassmorphism Theme */
+            --apple-glass: rgba(255, 255, 255, 0.65);
+            --apple-blur: blur(30px);
+            --apple-border: 1px solid rgba(255, 255, 255, 0.8);
+            --apple-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+            --shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.12);
+            --shadow-red: 0 0 30px rgba(229, 57, 53, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient Apple-style Background Animations */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            background: var(--bg-color);
+        }
+
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 20s infinite alternate ease-in-out;
+        }
+
+        .orb-1 {
+            width: 500px;
+            height: 500px;
+            background: rgba(229, 57, 53, 0.15);
+            top: -100px;
+            right: -100px;
+        }
+
+        .orb-2 {
+            width: 600px;
+            height: 600px;
+            background: rgba(255, 255, 255, 0.8);
+            bottom: -200px;
+            left: -100px;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate(-50px, 50px) scale(1.1);
+            }
+
+            100% {
+                transform: translate(50px, -50px) scale(0.9);
+            }
+        }
+
+        /* =========================================================
+           UNIFIED SIDEBAR CSS
+           ========================================================= */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-right: 1px solid rgba(0, 0, 0, 0.06);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            padding: 32px 0;
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
+        }
+
+        .sidebar-header {
+            padding: 0 32px;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-red);
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-header .icon-box {
+            background: var(--primary-red);
+            color: white;
+            padding: 8px;
+            border-radius: 12px;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(229, 57, 53, 0.3);
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 0 16px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #86868b;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .sidebar-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-item.active {
+            background: white;
+            color: var(--primary-red);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+        }
+
+        .sidebar-item:hover:not(.active) {
+            background: rgba(0, 0, 0, 0.03);
+            color: var(--text-dark);
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 0 16px;
+        }
+
+        /* Content Wrapper for Offset */
+        .content-wrapper {
+            margin-left: 260px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            z-index: 10;
+            position: relative;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                display: none !important;
+            }
+
+            .content-wrapper {
+                margin-left: 0 !important;
+            }
+        }
+
+        /* =========================================================
+           TOP NAVIGATION
+           ========================================================= */
+        header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: var(--apple-blur);
+            -webkit-backdrop-filter: var(--apple-blur);
+            border-bottom: var(--border-light);
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .breadcrumb {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            letter-spacing: -0.5px;
+        }
+
+        .profile-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-red);
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            transition: transform 0.3s ease;
+        }
+
+        .profile-icon:hover {
+            transform: scale(1.05);
+        }
+
+        /* =========================================================
+           MAIN LAYOUT
+           ========================================================= */
+        .main-container {
+            display: flex;
+            flex: 1;
+            padding: 30px 40px;
+            gap: 30px;
+            max-width: 1800px;
+            margin: 0 auto;
+            width: 100%;
+            perspective: 2000px;
+        }
+
+        /* =========================================================
+           LEFT PANEL - CASE DETAILS
+           ========================================================= */
+        .left-panel {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .case-card {
+            background: var(--apple-glass);
+            backdrop-filter: var(--apple-blur);
+            -webkit-backdrop-filter: var(--apple-blur);
+            border: var(--apple-border);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: var(--apple-shadow);
+            position: relative;
+            overflow: visible;
+            transform-style: preserve-3d;
+            animation: panelFloat 6s ease-in-out infinite, pulseRedGlow 3s alternate infinite;
+            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .case-card:hover {
+            transform: translateY(-5px) rotateX(2deg) rotateY(2deg);
+        }
+
+        @keyframes panelFloat {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        @keyframes pulseRedGlow {
+            0% {
+                box-shadow: 0 10px 40px rgba(229, 57, 53, 0.08);
+                border-color: rgba(229, 57, 53, 0.2);
+            }
+
+            100% {
+                box-shadow: 0 15px 50px rgba(229, 57, 53, 0.25);
+                border-color: rgba(229, 57, 53, 0.5);
+            }
+        }
+
+        .case-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 20px;
+            transform: translateZ(30px);
+        }
+
+        .case-title-group h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .severity-badge {
+            background: rgba(229, 57, 53, 0.1);
+            color: var(--primary-red);
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(229, 57, 53, 0.3);
+            box-shadow: 0 4px 15px rgba(229, 57, 53, 0.15);
+        }
+
+        .severity-badge i {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .case-info-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transform: translateZ(20px);
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 12px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            transition: transform 0.3s ease;
+        }
+
+        .info-item:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .info-icon {
+            background: var(--white);
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-red);
+            font-size: 1.3rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-content h4 {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-content p {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .required-resources {
+            margin-top: 30px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-light);
+            transform: translateZ(25px);
+        }
+
+        .required-resources h3 {
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .role-tag {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .role-tag.pending {
+            border-left: 4px solid var(--primary-red);
+        }
+
+        .role-tag.fulfilled {
+            border-left: 4px solid #34c759;
+            opacity: 0.7;
+            background: rgba(52, 199, 89, 0.1);
+        }
+
+        /* =========================================================
+           RIGHT PANEL - AVAILABLE RESOURCES
+           ========================================================= */
+        .right-panel {
+            width: 60%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transform-style: preserve-3d;
+        }
+
+        .controls-bar {
+            background: var(--apple-glass);
+            backdrop-filter: var(--apple-blur);
+            -webkit-backdrop-filter: var(--apple-blur);
+            padding: 16px 24px;
+            border-radius: 20px;
+            box-shadow: var(--apple-shadow);
+            border: var(--apple-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            transform: translateZ(10px);
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+        }
+
+        .form-select {
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background-color: var(--white);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            outline: none;
+            transition: all 0.3s;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px top 50%;
+            background-size: 10px auto;
+            padding-right: 30px;
+        }
+
+        .form-select:focus {
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 4px rgba(229, 57, 53, 0.15);
+        }
+
+        .btn {
+            background-color: var(--primary-red);
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(229, 57, 53, 0.2);
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(229, 57, 53, 0.35);
+        }
+
+        .btn:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .btn-auto-assign {
+            background: linear-gradient(135deg, #e53935 0%, #ff5252 100%);
+        }
+
+        /* Resource Groups */
+        .resources-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            overflow-y: auto;
+            padding-right: 15px;
+            padding-bottom: 80px;
+            /* added extra padding at bottom to clear the new floating button */
+            transform-style: preserve-3d;
+        }
+
+        /* Custom macOS-style Scrollbar */
+        .resources-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .resources-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .resources-container::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .resources-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .group-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.3px;
+        }
+
+        .group-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            perspective: 1500px;
+        }
+
+        /* =========================================================
+           3D RESOURCE CARDS
+           ========================================================= */
+        .resource-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1),
+                box-shadow 0.4s cubic-bezier(0.23, 1, 0.32, 1),
+                border-color 0.4s;
+            animation: cardEnter 0.6s cubic-bezier(0.23, 1, 0.32, 1) backwards;
+        }
+
+        @keyframes cardEnter {
+            from {
+                opacity: 0;
+                transform: translateY(30px) rotateX(10deg);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) rotateX(0);
+            }
+        }
+
+        .resource-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .resource-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .resource-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .resource-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .resource-card:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .resource-card:hover {
+            transform: translateY(-8px) translateZ(20px) rotateX(4deg) rotateY(-2deg);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+            z-index: 10;
+        }
+
+        .resource-card.recommended {
+            border: 1.5px solid var(--primary-red);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 235, 238, 0.5) 100%);
+            box-shadow: 0 10px 30px rgba(229, 57, 53, 0.1);
+        }
+
+        .resource-card.recommended:hover {
+            box-shadow: 0 30px 60px rgba(229, 57, 53, 0.2);
+        }
+
+        .recommended-badge {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: var(--primary-red);
+            color: var(--white);
+            font-size: 0.75rem;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            box-shadow: 0 6px 15px rgba(229, 57, 53, 0.4);
+            transform: translateZ(40px);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-header,
+        .card-stats,
+        .card-actions {
+            transform: translateZ(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .profile-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            transition: transform 0.3s;
+        }
+
+        .resource-card:hover .avatar {
+            transform: translateZ(10px) scale(1.1);
+        }
+
+        .name-role h4 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            line-height: 1.2;
+            color: var(--text-dark);
+            letter-spacing: -0.2px;
+        }
+
+        .name-role p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.available {
+            background: rgba(52, 199, 89, 0.15);
+            color: #248a3d;
+        }
+
+        .status-badge.busy {
+            background: rgba(229, 57, 53, 0.1);
+            color: var(--primary-red);
+        }
+
+        .card-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.02);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-dark);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-assign {
+            width: 100%;
+            justify-content: center;
+            padding: 10px 16px;
+        }
+
+        .btn-assign.disabled {
+            background: #e5e5ea;
+            color: #8e8e93;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* 3D Assignment Animation */
+        @keyframes assignOut3D {
+            0% {
+                transform: scale(1) translateZ(20px);
+                opacity: 1;
+            }
+
+            30% {
+                transform: scale(1.08) translateZ(50px);
+                opacity: 1;
+                box-shadow: 0 30px 60px rgba(52, 199, 89, 0.3);
+            }
+
+            100% {
+                transform: scale(0.5) translateY(-50px) translateZ(-100px);
+                opacity: 0;
+            }
+        }
+
+        .assigning {
+            animation: assignOut3D 0.7s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+            pointer-events: none;
+        }
+
+        /* =========================================================
+           FLOATING CONFIRM BUTTON
+           ========================================================= */
+        .btn-confirm-floating {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            background: linear-gradient(135deg, #34c759 0%, #28a745 100%);
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 16px;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px rgba(52, 199, 89, 0.3);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .btn-confirm-floating:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(52, 199, 89, 0.45);
+        }
+
+        .btn-confirm-floating:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .left-panel,
+            .right-panel {
+                width: 100%;
+            }
+
+            .case-card {
+                animation: pulseRedGlow 3s alternate infinite;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .controls-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+
+            .btn-confirm-floating {
+                bottom: 20px;
+                right: 20px;
+                left: 20px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Ambient Animated Background -->
+    <div class="ambient-bg">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+    </div>
+
+    <!-- Unified Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="icon-box">
+                <i class="fa-solid fa-shield-heart"></i>
+            </div>
+            RESCUE
+        </div>
+        <nav class="sidebar-nav">
+            <a href="dashboard1.html" class="sidebar-item">
+                <i class="fa-solid fa-chart-line"></i> Dashboard
+            </a>
+            <!-- Active tag set to Active Cases -->
+            <a href="assing1.html" class="sidebar-item active">
+                <i class="fa-solid fa-kit-medical"></i> Active Cases
+            </a>
+            <a href="trace1.html" class="sidebar-item">
+                <i class="fa-solid fa-map-location-dot"></i> Live Map
+            </a>
+            <a href="responder.html" class="sidebar-item">
+                <i class="fa-solid fa-user-group"></i> Responders
+            </a>
+            <a href="notification.html" class="sidebar-item">
+                <i class="fa-solid fa-bell"></i> Notifications
+            </a>
+        </nav>
+        <div class="sidebar-bottom">
+            <a href="controlcenter.html" class="sidebar-item">
+                <i class="fa-solid fa-gear"></i> Settings
+            </a>
+        </div>
+    </aside>
+
+    <!-- Content Wrapper to offset for sidebar -->
+    <div class="content-wrapper">
+
+        <!-- Header -->
+        <header>
+            <div>
+                <div class="breadcrumb">Crisis Hub <i class="fa-solid fa-chevron-right"
+                        style="font-size: 0.6rem; margin: 0 4px;"></i> Incidents <i class="fa-solid fa-chevron-right"
+                        style="font-size: 0.6rem; margin: 0 4px;"></i> Active <i class="fa-solid fa-chevron-right"
+                        style="font-size: 0.6rem; margin: 0 4px;"></i> INC-9284</div>
+                <div class="page-title">Unified Assignment Panel</div>
+            </div>
+            <div class="header-actions">
+                <div class="profile-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-container">
+
+            <!-- Left Panel: Case Details -->
+            <div class="left-panel">
+                <div class="case-card">
+                    <div class="case-header">
+                        <div class="case-title-group">
+                            <h2>🔥 Major Industrial Fire</h2>
+                        </div>
+                        <div class="severity-badge">
+                            <i class="fa-solid fa-circle-exclamation"></i> CRITICAL
+                        </div>
+                    </div>
+
+                    <ul class="case-info-list">
+                        <li class="info-item">
+                            <div class="info-icon"><i class="fa-solid fa-location-dot"></i></div>
+                            <div class="info-content">
+                                <h4>Location</h4>
+                                <p>Sector 4 Industrial Area, New Delhi</p>
+                            </div>
+                        </li>
+                        <li class="info-item">
+                            <div class="info-icon"><i class="fa-regular fa-clock"></i></div>
+                            <div class="info-content">
+                                <h4>Time Reported</h4>
+                                <p>10:15 PM (Active for 12 mins)</p>
+                            </div>
+                        </li>
+                        <li class="info-item">
+                            <div class="info-icon"><i class="fa-solid fa-users"></i></div>
+                            <div class="info-content">
+                                <h4>Estimated Casualties</h4>
+                                <p>~15 Workers Trapped</p>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div class="required-resources">
+                        <h3>Required Resource Types</h3>
+                        <div class="tags-container" id="required-tags">
+                            <div class="role-tag pending" data-role="Firefighter">🔥 Firefighter (2 needed)</div>
+                            <div class="role-tag pending" data-role="Ambulance">🚑 Ambulance (2 needed)</div>
+                            <div class="role-tag pending" data-role="NGO">🤝 NGO Relief (1 needed)</div>
+                            <div class="role-tag pending" data-role="Rescue">👷 Rescue Team (1 needed)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Available Resources -->
+            <div class="right-panel">
+                <div class="controls-bar">
+                    <div class="filters">
+                        <select class="form-select" id="filter-role">
+                            <option value="all">All Roles</option>
+                            <option value="Firefighter">Firefighter</option>
+                            <option value="Ambulance">Ambulance</option>
+                            <option value="Doctor">Doctor</option>
+                            <option value="Rescue">Rescue Worker</option>
+                            <option value="NGO">NGO</option>
+                            <option value="Volunteer">Volunteer</option>
+                        </select>
+                        <select class="form-select" id="filter-status">
+                            <option value="all">All Statuses</option>
+                            <option value="Available">Available Only</option>
+                        </select>
+                        <select class="form-select" id="filter-distance">
+                            <option value="all">Any Distance</option>
+                            <option value="5">Under 5 km</option>
+                            <option value="10">Under 10 km</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-auto-assign" id="btn-auto-assign">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Auto Assign Best
+                    </button>
+                </div>
+
+                <div class="resources-container">
+                    <!-- Group 1: Emergency Responders -->
+                    <div id="group-responders">
+                        <div class="group-title">🚑 Emergency Responders</div>
+                        <div class="resource-grid" id="grid-responders">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Group 2: Support & NGOs -->
+                    <div id="group-support">
+                        <div class="group-title">🤝 Support & NGOs</div>
+                        <div class="resource-grid" id="grid-support">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Floating Confirm Button added without changing existing code -->
+        <button class="btn-confirm-floating" id="btn-confirm-final">
+            <i class="fa-solid fa-check-circle"></i> Confirm
+        </button>
+
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // Realistic Dummy Data (Merged ecosystem of Responders + NGOs)
+        let resources = [
+            { id: 1, type: 'Firefighter', icon: '🔥', name: 'Engine 41 Heavy', org: 'City Fire Dept', distance: 1.2, status: 'Available', rating: 4.9, recommended: true, group: 'responder' },
+            { id: 2, type: 'Firefighter', icon: '🔥', name: 'Engine 12 Rapid', org: 'City Fire Dept', distance: 2.5, status: 'Available', rating: 4.6, recommended: false, group: 'responder' },
+            { id: 3, type: 'Ambulance', icon: '🚑', name: 'LifeCare ALS-1', org: 'LifeCare Hospitals', distance: 1.8, status: 'Available', rating: 4.8, recommended: true, group: 'responder' },
+            { id: 4, type: 'Ambulance', icon: '🚑', name: 'City Med BLS-4', org: 'Municipal Health', distance: 3.1, status: 'Busy', rating: 4.5, recommended: false, group: 'responder' },
+            { id: 5, type: 'Ambulance', icon: '🚑', name: 'RedCross Unit Alpha', org: 'Red Cross', distance: 2.2, status: 'Available', rating: 4.7, recommended: false, group: 'responder' },
+            { id: 6, type: 'Rescue', icon: '👷', name: 'Urban Search Team 1', org: 'NDRF Base 4', distance: 3.0, status: 'Available', rating: 4.9, recommended: true, group: 'responder' },
+            { id: 7, type: 'Doctor', icon: '🩺', name: 'Dr. Anita Verma', org: 'General Hospital Trauma', distance: 4.5, status: 'Available', rating: 5.0, recommended: false, group: 'responder' },
+
+            { id: 8, type: 'NGO', icon: '🤝', name: 'Sewa Relief Foundation', org: 'NGO - Food/Water', distance: 2.8, status: 'Available', rating: 4.8, recommended: true, group: 'support' },
+            { id: 9, type: 'NGO', icon: '🤝', name: 'Care India Shelters', org: 'NGO - Shelter', distance: 5.2, status: 'Busy', rating: 4.7, recommended: false, group: 'support' },
+            { id: 10, type: 'Volunteer', icon: '🙋', name: 'Local Youth Squad', org: 'Community Volunteers', distance: 0.8, status: 'Available', rating: 4.5, recommended: false, group: 'support' },
+            { id: 11, type: 'Volunteer', icon: '🙋', name: 'Sector 4 Welfare Assoc.', org: 'Resident Welfare', distance: 1.5, status: 'Available', rating: 4.2, recommended: false, group: 'support' }
+        ];
+
+        // State trackers for requirements
+        let requirements = {
+            'Firefighter': 2,
+            'Ambulance': 2,
+            'NGO': 1,
+            'Rescue': 1
+        };
+
+        const gridResponders = document.getElementById('grid-responders');
+        const gridSupport = document.getElementById('grid-support');
+
+        // Render Function
+        function renderResources() {
+            // Get filter values
+            const fRole = document.getElementById('filter-role').value;
+            const fStatus = document.getElementById('filter-status').value;
+            const fDist = document.getElementById('filter-distance').value;
+
+            // Clear Grids
+            gridResponders.innerHTML = '';
+            gridSupport.innerHTML = '';
+
+            let respondersCount = 0;
+            let supportCount = 0;
+
+            resources.forEach((res, index) => {
+                // Apply Filters
+                if (fRole !== 'all' && res.type !== fRole) return;
+                if (fStatus !== 'all' && res.status !== fStatus) return;
+                if (fDist !== 'all' && res.distance > parseInt(fDist)) return;
+
+                // Build Card HTML
+                const cardHTML = `
+                    <div class="resource-card ${res.recommended ? 'recommended' : ''}" id="card-${res.id}" style="animation-delay: ${index * 0.05}s">
+                        ${res.recommended ? `<div class="recommended-badge"><i class="fa-solid fa-star"></i> Recommended</div>` : ''}
+                        <div class="card-header">
+                            <div class="profile-info">
+                                <div class="avatar">${res.icon}</div>
+                                <div class="name-role">
+                                    <h4>${res.name}</h4>
+                                    <p>${res.org}</p>
+                                </div>
+                            </div>
+                            <span class="status-badge ${res.status === 'Available' ? 'available' : 'busy'}">${res.status}</span>
+                        </div>
+                        <div class="card-stats">
+                            <div class="stat">
+                                <span class="stat-label">Distance</span>
+                                <span class="stat-value"><i class="fa-solid fa-location-arrow" style="color: #8e8e93; font-size: 0.8rem;"></i> ${res.distance} km</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Rating</span>
+                                <span class="stat-value" style="color: #f5b041;"><i class="fa-solid fa-star"></i> ${res.rating}</span>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-assign ${res.status !== 'Available' ? 'disabled' : ''}" 
+                                    onclick="assignResource(${res.id}, '${res.type}')" 
+                                    ${res.status !== 'Available' ? 'disabled' : ''}>
+                                <i class="fa-solid fa-paper-plane"></i> Assign
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                if (res.group === 'responder') {
+                    gridResponders.innerHTML += cardHTML;
+                    respondersCount++;
+                } else {
+                    gridSupport.innerHTML += cardHTML;
+                    supportCount++;
+                }
+            });
+
+            // Hide empty groups
+            document.getElementById('group-responders').style.display = respondersCount > 0 ? 'block' : 'none';
+            document.getElementById('group-support').style.display = supportCount > 0 ? 'block' : 'none';
+        }
+
+        // Assign Single Resource Logic
+        window.assignResource = function (id, type) {
+            const card = document.getElementById(`card-${id}`);
+            const btn = card.querySelector('.btn-assign');
+
+            // Update button UI immediately (Apple-style Green)
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Assigned';
+            btn.style.backgroundColor = '#34c759';
+            btn.style.boxShadow = '0 4px 15px rgba(52, 199, 89, 0.3)';
+            btn.classList.add('disabled');
+
+            // Add robust 3D removal animation
+            setTimeout(() => {
+                card.classList.add('assigning');
+
+                // Remove from data and UI after animation
+                setTimeout(() => {
+                    resources = resources.filter(r => r.id !== id);
+                    updateRequirements(type);
+                    renderResources();
+                }, 700);
+            }, 400);
+        }
+
+        // Update Case Requirements UI
+        function updateRequirements(type) {
+            if (requirements[type] && requirements[type] > 0) {
+                requirements[type] -= 1;
+
+                // Find tag
+                const tags = document.querySelectorAll('.role-tag');
+                tags.forEach(tag => {
+                    if (tag.dataset.role === type) {
+                        if (requirements[type] === 0) {
+                            tag.classList.remove('pending');
+                            tag.classList.add('fulfilled');
+                            tag.innerHTML = `${tag.innerHTML.split(' ')[0]} ${type} (Fulfilled) <i class="fa-solid fa-circle-check"></i>`;
+                        } else {
+                            tag.innerHTML = `${tag.innerHTML.split(' ')[0]} ${type} (${requirements[type]} needed)`;
+                        }
+                    }
+                });
+            }
+        }
+
+        // Auto Assign AI Feature
+        document.getElementById('btn-auto-assign').addEventListener('click', function () {
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...';
+            btn.style.pointerEvents = 'none';
+            btn.style.transform = 'scale(0.95)';
+
+            // Find all recommended AND available resources
+            const toAssign = resources.filter(r => r.recommended && r.status === 'Available');
+
+            if (toAssign.length === 0) {
+                btn.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> No matches';
+                btn.style.background = '#8e8e93';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                    btn.style.pointerEvents = 'auto';
+                    btn.style.transform = 'scale(1)';
+                }, 2000);
+                return;
+            }
+
+            // Staggered 3D assignment simulation
+            toAssign.forEach((res, index) => {
+                setTimeout(() => {
+                    assignResource(res.id, res.type);
+                }, index * 400);
+            });
+
+            // Reset Auto-Assign Button
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-solid fa-check-double"></i> Deployed';
+                btn.style.background = '#34c759';
+                btn.style.transform = 'scale(1)';
+
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = ''; // restore gradient
+                    btn.style.pointerEvents = 'auto';
+                }, 3000);
+            }, toAssign.length * 400 + 500);
+        });
+
+        // Interactive logic for the new floating Confirm button
+        document.getElementById('btn-confirm-final').addEventListener('click', function () {
+            this.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Confirming...';
+            setTimeout(() => {
+                this.innerHTML = '<i class="fa-solid fa-check-double"></i> Confirmed!';
+                this.style.background = '#248a3d';
+
+                // Redirect after 1.5s
+                setTimeout(() => {
+                    window.location.href = 'responder.html';
+                }, 1500);
+            }, 1000);
+        });
+
+        // Attach Event Listeners to Filters
+        document.getElementById('filter-role').addEventListener('change', renderResources);
+        document.getElementById('filter-status').addEventListener('change', renderResources);
+        document.getElementById('filter-distance').addEventListener('change', renderResources);
+
+        // Initial Render
+        renderResources();
+
+        // Check for auto-assign query parameter
+        if (window.location.search.includes('autoAssign=true')) {
+            setTimeout(() => {
+                const autoAssignBtn = document.getElementById('btn-auto-assign');
+                if (autoAssignBtn) {
+                    autoAssignBtn.click();
+                }
+            }, 500);
+        }
+
+    </script>
+</body>
+
+</html>
